@@ -19,32 +19,58 @@ class ClaudeRunner {
       env: { ...process.env, FORCE_COLOR: '1' },
     });
 
+    // Build the workflow command
+    let workflowPrompt = '/workflow';
+    if (prdFile) {
+      workflowPrompt += ` PRD is at ${prdFile}`;
+    }
+    if (prompt) {
+      const escapedPrompt = prompt.replace(/\r?\n/g, ' ');
+      workflowPrompt += ` — ${escapedPrompt}`;
+    }
+
+    // Watch output for Claude's ready signal, then send /workflow
+    let claudeSent = false;
+    let workflowSent = false;
+    let buffer = '';
+
     this.ptyProcess.onData((data) => {
       if (onData) onData(data);
+
+      // Watch for signals to auto-send commands
+      if (!claudeSent || !workflowSent) {
+        buffer += data;
+
+        // Send claude command after shell prompt appears (e.g., > or $)
+        if (!claudeSent && buffer.length > 50) {
+          claudeSent = true;
+          setTimeout(() => {
+            this.ptyProcess.write(`claude --dangerously-skip-permissions\r`);
+          }, 300);
+        }
+
+        // Wait for Claude's ready indicator (the > prompt or "Human:" or similar)
+        // Claude CLI shows a prompt character when ready for input
+        if (claudeSent && !workflowSent) {
+          // Look for Claude's input prompt — typically ends with a special character
+          // or we see the welcome banner has finished
+          if (buffer.includes('\\') || buffer.includes('>') || buffer.includes('Human:') || buffer.includes('claude-code') || buffer.includes('Tips')) {
+            // Check if enough time has passed since claude was sent
+            const timeSinceClaude = buffer.length;
+            if (timeSinceClaude > 500) {
+              workflowSent = true;
+              setTimeout(() => {
+                this.ptyProcess.write(`${workflowPrompt}\r`);
+              }, 1000);
+            }
+          }
+        }
+      }
     });
 
     this.ptyProcess.onExit(({ exitCode, signal }) => {
       this.bus.emit('claude:exit', { code: exitCode, signal });
     });
-
-    // Send the claude command after a brief delay for shell init
-    setTimeout(() => {
-      const claudeCmd = `claude --dangerously-skip-permissions\r`;
-      this.ptyProcess.write(claudeCmd);
-
-      // After Claude starts, send the workflow prompt
-      setTimeout(() => {
-        let workflowPrompt = '/workflow';
-        if (prdFile) {
-          workflowPrompt += ` PRD is at ${prdFile}`;
-        }
-        if (prompt) {
-          const escapedPrompt = prompt.replace(/\r?\n/g, ' ');
-          workflowPrompt += ` — ${escapedPrompt}`;
-        }
-        this.ptyProcess.write(`${workflowPrompt}\r`);
-      }, 2000);
-    }, 500);
 
     return this.ptyProcess;
   }

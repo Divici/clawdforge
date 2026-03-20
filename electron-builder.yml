@@ -15,9 +15,7 @@ files:
   - "!node_modules/**/__tests__/**"
 win:
   target: dir
-  signDll: false
-  sign: null
-forceCodeSigning: false
+  signAndEditExecutable: false
 npmRebuild: false
 asar: true
 asarUnpack:

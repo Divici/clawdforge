@@ -3,7 +3,7 @@
 
 import { drawSprite, loadSprite } from './sprites.js';
 
-const SIZE = 64;
+const SIZE = 128;
 
 export class Orchestrator {
   constructor() {
@@ -76,11 +76,11 @@ export class Orchestrator {
 
     // Label
     ctx.save();
-    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.font = '10px "Press Start 2P", monospace';
     ctx.fillStyle = '#4ade80';
     ctx.globalAlpha = 0.6;
     ctx.textAlign = 'center';
-    ctx.fillText('ORCHESTRATOR', this.x + SIZE / 2, this.y - 8);
+    ctx.fillText('ORCHESTRATOR', this.x + SIZE / 2, this.y - 12);
     ctx.restore();
   }
 

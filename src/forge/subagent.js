@@ -3,9 +3,9 @@
 
 import { drawSprite, loadSprite } from './sprites.js';
 
-const POD_SIZE = 32;
+const POD_SIZE = 64;
 const MAX_DISPLAY = 6;
-const POD_GAP = 16;
+const POD_GAP = 20;
 
 export class SubagentManager {
   constructor() {
@@ -150,7 +150,7 @@ export class SubagentManager {
     // Count badge if more agents than displayed
     if (this.totalAgents > MAX_DISPLAY) {
       ctx.save();
-      ctx.font = '8px "Press Start 2P", monospace';
+      ctx.font = '10px "Press Start 2P", monospace';
       ctx.fillStyle = '#e8956a';
       ctx.globalAlpha = 0.8;
       ctx.textAlign = 'center';
@@ -161,7 +161,7 @@ export class SubagentManager {
 
     // Label
     ctx.save();
-    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.font = '10px "Press Start 2P", monospace';
     ctx.fillStyle = '#4ade80';
     ctx.globalAlpha = 0.6;
     ctx.textAlign = 'center';

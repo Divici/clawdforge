@@ -1,8 +1,9 @@
 // Forge core — canvas-drawn forge structure + state machine
 // States: cold, active, cooling
 
-const SIZE = 48;
-const GLOW_RADIUS = 32;
+const WIDTH = 128;
+const HEIGHT = 96;
+const GLOW_RADIUS = 48;
 
 export class ForgeCore {
   constructor() {
@@ -25,7 +26,7 @@ export class ForgeCore {
   }
 
   resize(width, height) {
-    this.x = (width - SIZE) / 2;
+    this.x = (width - WIDTH) / 2;
     this.y = height * 0.42;
   }
 
@@ -70,8 +71,8 @@ export class ForgeCore {
     // Glow effect
     if (glowColor && glowAlpha > 0) {
       const gradient = ctx.createRadialGradient(
-        this.x + SIZE / 2, this.y + SIZE / 2, 4,
-        this.x + SIZE / 2, this.y + SIZE / 2, SIZE + GLOW_RADIUS
+        this.x + WIDTH / 2, this.y + HEIGHT / 2, 4,
+        this.x + WIDTH / 2, this.y + HEIGHT / 2, Math.max(WIDTH, HEIGHT) + GLOW_RADIUS
       );
       gradient.addColorStop(0, glowColor);
       gradient.addColorStop(1, 'transparent');
@@ -79,49 +80,49 @@ export class ForgeCore {
       ctx.fillStyle = gradient;
       ctx.fillRect(
         this.x - GLOW_RADIUS, this.y - GLOW_RADIUS,
-        SIZE + GLOW_RADIUS * 2, SIZE + GLOW_RADIUS * 2
+        WIDTH + GLOW_RADIUS * 2, HEIGHT + GLOW_RADIUS * 2
       );
     }
 
     ctx.globalAlpha = coreAlpha;
 
-    // Forge body — anvil shape
+    // Forge body — wide anvil shape
     ctx.fillStyle = '#5b9a5b';
     // Base
-    ctx.fillRect(this.x + 4, this.y + SIZE - 12, SIZE - 8, 12);
+    ctx.fillRect(this.x + 8, this.y + HEIGHT - 20, WIDTH - 16, 20);
     // Middle pillar
-    ctx.fillRect(this.x + 12, this.y + 12, SIZE - 24, SIZE - 24);
+    ctx.fillRect(this.x + 24, this.y + 24, WIDTH - 48, HEIGHT - 48);
     // Top plate
-    ctx.fillRect(this.x, this.y, SIZE, 16);
+    ctx.fillRect(this.x, this.y, WIDTH, 28);
 
     // Inner core (hot center)
     if (this.state === 'active' || this.state === 'cooling') {
       ctx.fillStyle = '#e8956a';
       ctx.globalAlpha = coreAlpha * 0.6;
-      ctx.fillRect(this.x + 16, this.y + 16, SIZE - 32, SIZE - 32);
+      ctx.fillRect(this.x + 32, this.y + 28, WIDTH - 64, HEIGHT - 56);
     }
 
     // Outline
     ctx.strokeStyle = '#1a3a1a';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2;
     ctx.globalAlpha = coreAlpha;
-    ctx.strokeRect(this.x, this.y, SIZE, 16);
-    ctx.strokeRect(this.x + 12, this.y + 12, SIZE - 24, SIZE - 24);
-    ctx.strokeRect(this.x + 4, this.y + SIZE - 12, SIZE - 8, 12);
+    ctx.strokeRect(this.x, this.y, WIDTH, 28);
+    ctx.strokeRect(this.x + 24, this.y + 24, WIDTH - 48, HEIGHT - 48);
+    ctx.strokeRect(this.x + 8, this.y + HEIGHT - 20, WIDTH - 16, 20);
 
     ctx.restore();
 
     // Label
     ctx.save();
-    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.font = '10px "Press Start 2P", monospace';
     ctx.fillStyle = '#e8956a';
     ctx.globalAlpha = 0.6;
     ctx.textAlign = 'center';
-    ctx.fillText('FORGE', this.x + SIZE / 2, this.y - 8);
+    ctx.fillText('FORGE', this.x + WIDTH / 2, this.y - 10);
     ctx.restore();
   }
 
-  get centerX() { return this.x + SIZE / 2; }
+  get centerX() { return this.x + WIDTH / 2; }
   get topY() { return this.y; }
-  get bottomY() { return this.y + SIZE; }
+  get bottomY() { return this.y + HEIGHT; }
 }
