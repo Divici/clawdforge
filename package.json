@@ -4,7 +4,7 @@
   "description": "Matrix Forge Command Deck — retro-futuristic Claude CLI visualizer",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "node launch.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "rebuild": "electron-rebuild",
@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.3",
-    "electron": "^41.0.3",
+    "electron": "^30.5.1",
     "electron-builder": "^26.8.1",
     "vitest": "^4.1.0"
   }

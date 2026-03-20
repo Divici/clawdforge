@@ -20,7 +20,6 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
 
-  // Remove default menu bar
   mainWindow.setMenuBarVisibility(false);
 }
 
