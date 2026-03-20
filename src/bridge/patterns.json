@@ -1,0 +1,48 @@
+{
+  "patterns": [
+    {
+      "event": "mode:change",
+      "regex": "(presearch|build|planning|testing|deploying)",
+      "flags": "i",
+      "payloadKey": "mode",
+      "captureGroup": 1
+    },
+    {
+      "event": "stage:change",
+      "regex": "\\[STAGE:(\\w+)\\]|Phase:?\\s+(\\w[\\w-]+)",
+      "flags": "i",
+      "payloadKey": "stage",
+      "captureGroup": 1
+    },
+    {
+      "event": "agent:spawn",
+      "regex": "[Ll]aunching.*agent|[Ss]ubagent.*start|[Ss]pawning.*agent|Agent tool.*launch",
+      "flags": "",
+      "payloadKey": "name"
+    },
+    {
+      "event": "agent:done",
+      "regex": "[Ss]ubagent.*complete|[Aa]gent.*finished|[Aa]gent.*returned|[Aa]gent.*done",
+      "flags": "",
+      "payloadKey": "name"
+    },
+    {
+      "event": "decision:lock",
+      "regex": "[Dd]ecision.*locked|LOCKED:|✅.*decided",
+      "flags": "",
+      "payloadKey": "text"
+    },
+    {
+      "event": "artifact:create",
+      "regex": "[Cc]reated?\\s+(file|artifact)|File created|[Ww]rit(ing|e).*\\.\\w{1,5}$",
+      "flags": "",
+      "payloadKey": "path"
+    },
+    {
+      "event": "warning",
+      "regex": "⚠|[Ww]arning:|[Bb]locker:",
+      "flags": "",
+      "payloadKey": "text"
+    }
+  ]
+}
