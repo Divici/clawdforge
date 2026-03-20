@@ -1,5 +1,6 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { ForgeBus } = require('./src/bridge/event-bus');
 const { StageParser } = require('./src/bridge/stage-parser');
 const { ClaudeRunner } = require('./src/bridge/claude-runner');
@@ -54,13 +55,47 @@ bus.on('claude:exit', (data) => {
   }
 });
 
+// IPC: open native directory picker
+ipcMain.handle('dialog:select-directory', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory'],
+    title: 'Select Project Directory',
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return result.filePaths[0];
+});
+
+// IPC: scan directory for PRD files
+ipcMain.handle('project:scan-prd', async (_event, dirPath) => {
+  try {
+    const files = fs.readdirSync(dirPath);
+    // Look for common PRD file patterns
+    const prdPatterns = [
+      /prd/i,
+      /product.?requirements/i,
+      /brief/i,
+      /spec/i,
+      /requirements/i,
+    ];
+    const prdFiles = files.filter((f) => {
+      if (!f.endsWith('.md') && !f.endsWith('.txt')) return false;
+      return prdPatterns.some((p) => p.test(f));
+    });
+    return { prdFiles, hasWorkflowState: files.includes('WORKFLOW_STATE.md') };
+  } catch (e) {
+    return { prdFiles: [], hasWorkflowState: false, error: e.message };
+  }
+});
+
 // IPC: spawn Claude
-ipcMain.on('claude:spawn', (_event, prompt) => {
+ipcMain.on('claude:spawn', (_event, config) => {
+  const { projectDir, prompt, prdFile } = config;
+
   if (runner) {
     runner.kill();
   }
   runner = new ClaudeRunner(bus);
-  runner.spawn(prompt, (data) => {
+  runner.spawn({ projectDir, prompt, prdFile }, (data) => {
     // Feed to stage parser
     parser.feed(data);
     // Forward raw data to terminal

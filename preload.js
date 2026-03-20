@@ -1,8 +1,12 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('forgeAPI', {
+  // Project directory selection
+  selectDirectory: () => ipcRenderer.invoke('dialog:select-directory'),
+  scanForPRD: (dirPath) => ipcRenderer.invoke('project:scan-prd', dirPath),
+
   // Claude process lifecycle
-  spawnClaude: (prompt) => ipcRenderer.send('claude:spawn', prompt),
+  spawnClaude: (config) => ipcRenderer.send('claude:spawn', config),
   onClaudeExit: (callback) => ipcRenderer.on('claude:exit', (_event, data) => callback(data)),
 
   // Terminal I/O

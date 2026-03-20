@@ -5,10 +5,17 @@ const container = document.getElementById('terminal-container');
 const overlay = document.getElementById('launch-overlay');
 const appContainer = document.getElementById('app');
 const startBtn = document.getElementById('start-btn');
+const browseBtn = document.getElementById('browse-btn');
+const dirPathEl = document.getElementById('dir-path');
 const promptInput = document.getElementById('prompt-input');
+const prdStatus = document.getElementById('prd-status');
+const prdNone = document.getElementById('prd-none');
+const prdName = document.getElementById('prd-name');
 
 let term = null;
 let fitAddon = null;
+let selectedDir = null;
+let detectedPRD = null;
 
 function initTerminal() {
   term = new Terminal({
@@ -63,21 +70,51 @@ function initTerminal() {
   term.focus();
 }
 
+// Browse button — open native directory picker
+browseBtn.addEventListener('click', async () => {
+  const dirPath = await window.forgeAPI.selectDirectory();
+  if (!dirPath) return;
+
+  selectedDir = dirPath;
+  dirPathEl.textContent = dirPath;
+  dirPathEl.classList.add('selected');
+
+  // Scan for PRD
+  const result = await window.forgeAPI.scanForPRD(dirPath);
+
+  prdStatus.classList.add('hidden');
+  prdNone.classList.add('hidden');
+
+  if (result.prdFiles && result.prdFiles.length > 0) {
+    detectedPRD = result.prdFiles[0];
+    prdName.textContent = `PRD found: ${detectedPRD}`;
+    prdStatus.classList.remove('hidden');
+  } else {
+    detectedPRD = null;
+    prdNone.classList.remove('hidden');
+  }
+
+  // Enable start button
+  startBtn.disabled = false;
+});
+
 // Launch button handler
 startBtn.addEventListener('click', () => {
+  if (!selectedDir) return;
+
   const prompt = promptInput.value.trim();
-  if (!prompt) {
-    promptInput.focus();
-    return;
-  }
 
   // Hide overlay, show app
   overlay.classList.add('hidden');
   appContainer.classList.remove('hidden');
 
-  // Initialize terminal and spawn Claude
+  // Initialize terminal and spawn Claude in the selected directory
   initTerminal();
-  window.forgeAPI.spawnClaude(prompt);
+  window.forgeAPI.spawnClaude({
+    projectDir: selectedDir,
+    prompt: prompt || null,
+    prdFile: detectedPRD || null,
+  });
 });
 
 // Allow Enter in textarea to submit (Shift+Enter for newline)

@@ -7,14 +7,15 @@ class ClaudeRunner {
     this.ptyProcess = null;
   }
 
-  spawn(prompt, onData) {
+  spawn(config, onData) {
+    const { projectDir, prompt, prdFile } = config;
     const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/bash';
 
     this.ptyProcess = pty.spawn(shell, [], {
       name: 'xterm-256color',
       cols: 120,
       rows: 30,
-      cwd: process.cwd(),
+      cwd: projectDir,
       env: { ...process.env, FORCE_COLOR: '1' },
     });
 
@@ -33,8 +34,15 @@ class ClaudeRunner {
 
       // After Claude starts, send the workflow prompt
       setTimeout(() => {
-        const escapedPrompt = prompt.replace(/\r?\n/g, ' ');
-        this.ptyProcess.write(`/workflow ${escapedPrompt}\r`);
+        let workflowPrompt = '/workflow';
+        if (prdFile) {
+          workflowPrompt += ` PRD is at ${prdFile}`;
+        }
+        if (prompt) {
+          const escapedPrompt = prompt.replace(/\r?\n/g, ' ');
+          workflowPrompt += ` — ${escapedPrompt}`;
+        }
+        this.ptyProcess.write(`${workflowPrompt}\r`);
       }, 2000);
     }, 500);
 

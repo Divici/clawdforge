@@ -91,17 +91,16 @@ window.forgeAPI.onClaudeExit((data) => {
   }
 });
 
-// Set project name from launch input and start timer when Claude spawns
-const promptInput = document.getElementById('prompt-input');
+// Set project name from directory and start timer when Claude spawns
+const dirPathEl = document.getElementById('dir-path');
 const startBtn = document.getElementById('start-btn');
 
 startBtn.addEventListener('click', () => {
-  const prompt = promptInput.value.trim();
-  if (prompt) {
-    // Use first 30 chars of prompt as project name
-    fields.project.textContent = prompt.length > 30
-      ? prompt.slice(0, 30) + '...'
-      : prompt;
+  const dirPath = dirPathEl.textContent;
+  if (dirPath && dirPath !== 'No directory selected') {
+    // Use the directory name as the project name
+    const dirName = dirPath.split(/[\\/]/).pop();
+    fields.project.textContent = dirName;
     startElapsedTimer();
   }
 });
