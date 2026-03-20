@@ -1,0 +1,28 @@
+{
+  "name": "matrix-forge",
+  "version": "1.0.0",
+  "description": "Matrix Forge Command Deck — retro-futuristic Claude CLI visualizer",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "rebuild": "electron-rebuild",
+    "build": "electron-builder"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "electron-reload": "^2.0.0-alpha.1",
+    "node-pty": "^1.1.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.0.3",
+    "electron": "^41.0.3",
+    "electron-builder": "^26.8.1",
+    "vitest": "^4.1.0"
+  }
+}
