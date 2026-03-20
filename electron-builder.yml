@@ -1,0 +1,24 @@
+appId: com.matrixforge.commanddeck
+productName: Matrix Forge
+directories:
+  output: dist
+files:
+  - main.js
+  - launch.js
+  - preload.js
+  - src/**/*
+  - node_modules/**/*
+  - "!node_modules/**/*.md"
+  - "!node_modules/**/*.map"
+  - "!node_modules/**/test/**"
+  - "!node_modules/**/tests/**"
+  - "!node_modules/**/__tests__/**"
+win:
+  target: dir
+  signDll: false
+  sign: null
+forceCodeSigning: false
+npmRebuild: false
+asar: true
+asarUnpack:
+  - node_modules/node-pty/**/*
