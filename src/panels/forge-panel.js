@@ -4,6 +4,8 @@ import { GridLines } from '../forge/grid-lines.js';
 import { Orchestrator } from '../forge/orchestrator.js';
 import { ForgeCore } from '../forge/forge-core.js';
 import { SubagentManager } from '../forge/subagent.js';
+import { EnergyLines } from '../forge/energy-lines.js';
+import { ParticleSystem } from '../forge/particles.js';
 
 const canvas = document.getElementById('forge-canvas');
 let renderer = null;
@@ -17,12 +19,17 @@ function initForge() {
   forgeCore = new ForgeCore();
   subagentManager = new SubagentManager();
 
+  const energyLines = new EnergyLines(orchestrator, forgeCore, subagentManager);
+  const particles = new ParticleSystem(orchestrator, forgeCore, subagentManager);
+
   // Add layers bottom to top
   renderer.addLayer(new MatrixRain());
   renderer.addLayer(new GridLines());
+  renderer.addLayer(energyLines);
   renderer.addLayer(forgeCore);
   renderer.addLayer(orchestrator);
   renderer.addLayer(subagentManager);
+  renderer.addLayer(particles);
 
   // Handle resize
   const resizeObserver = new ResizeObserver(() => {
