@@ -2,8 +2,8 @@
 
 const CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789';
 const CHAR_SIZE = 14;
-const FADE_ALPHA = 0.04;
 const RAIN_OPACITY = 0.15;
+const TRAIL_LENGTH = 8;
 
 export class MatrixRain {
   constructor() {
@@ -17,51 +17,62 @@ export class MatrixRain {
     this.height = height;
     const colCount = Math.ceil(width / CHAR_SIZE);
 
-    // Preserve existing columns, add new ones if needed
     while (this.columns.length < colCount) {
       this.columns.push({
         y: Math.random() * height,
         speed: 0.5 + Math.random() * 1.5,
-        chars: [],
+        chars: this._randomChars(TRAIL_LENGTH),
       });
     }
     this.columns.length = colCount;
   }
 
+  _randomChars(count) {
+    const result = [];
+    for (let i = 0; i < count; i++) {
+      result.push(CHARS[Math.floor(Math.random() * CHARS.length)]);
+    }
+    return result;
+  }
+
   update() {
     for (const col of this.columns) {
       col.y += col.speed;
-      if (col.y > this.height + CHAR_SIZE) {
+      if (col.y > this.height + CHAR_SIZE * TRAIL_LENGTH) {
         col.y = -CHAR_SIZE;
         col.speed = 0.5 + Math.random() * 1.5;
+        col.chars = this._randomChars(TRAIL_LENGTH);
+      }
+      // Occasionally change a trail character
+      if (Math.random() < 0.05) {
+        const idx = Math.floor(Math.random() * col.chars.length);
+        col.chars[idx] = CHARS[Math.floor(Math.random() * CHARS.length)];
       }
     }
   }
 
   draw(ctx) {
-    // Fade previous frame
-    ctx.fillStyle = `rgba(30, 30, 46, ${FADE_ALPHA})`;
-    ctx.fillRect(0, 0, this.width, this.height);
-
     ctx.font = `${CHAR_SIZE}px monospace`;
-    ctx.globalAlpha = RAIN_OPACITY;
 
     for (let i = 0; i < this.columns.length; i++) {
       const col = this.columns[i];
       const x = i * CHAR_SIZE;
-      const char = CHARS[Math.floor(Math.random() * CHARS.length)];
 
-      // Bright head
-      ctx.fillStyle = '#4ade80';
-      ctx.globalAlpha = RAIN_OPACITY * 1.5;
-      ctx.fillText(char, x, col.y);
+      // Draw trail (dimmer further from head)
+      for (let j = 0; j < TRAIL_LENGTH; j++) {
+        const charY = col.y - j * CHAR_SIZE;
+        if (charY < -CHAR_SIZE || charY > this.height + CHAR_SIZE) continue;
 
-      // Dimmer trail chars
-      ctx.fillStyle = '#2d5a3d';
-      ctx.globalAlpha = RAIN_OPACITY * 0.6;
-      for (let j = 1; j < 6; j++) {
-        const trailChar = CHARS[Math.floor(Math.random() * CHARS.length)];
-        ctx.fillText(trailChar, x, col.y - j * CHAR_SIZE);
+        const fade = 1 - j / TRAIL_LENGTH;
+        if (j === 0) {
+          // Bright head
+          ctx.fillStyle = '#4ade80';
+          ctx.globalAlpha = RAIN_OPACITY * 1.8 * fade;
+        } else {
+          ctx.fillStyle = '#2d5a3d';
+          ctx.globalAlpha = RAIN_OPACITY * fade * 0.7;
+        }
+        ctx.fillText(col.chars[j] || '0', x, charY);
       }
     }
 

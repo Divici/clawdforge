@@ -55,6 +55,11 @@ export class ForgeRenderer {
   }
 
   _render() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    // Clear canvas with background color
+    this.ctx.fillStyle = '#1e1e2e';
+    this.ctx.fillRect(0, 0, rect.width, rect.height);
+
     for (const layer of this.layers) {
       if (layer.update) layer.update();
       if (layer.draw) layer.draw(this.ctx);
