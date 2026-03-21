@@ -1,11 +1,7 @@
 import { Terminal } from '../../node_modules/@xterm/xterm/lib/xterm.mjs';
 import { FitAddon } from '../../node_modules/@xterm/addon-fit/lib/addon-fit.mjs';
 
-const chatContainer = document.getElementById('chat-container');
-const terminalContainer = document.getElementById('terminal-container');
-const chatMessages = document.getElementById('chat-messages');
-const chatInput = document.getElementById('chat-input');
-const chatSendBtn = document.getElementById('chat-send');
+const container = document.getElementById('terminal-container');
 const overlay = document.getElementById('launch-overlay');
 const appContainer = document.getElementById('app');
 const startBtn = document.getElementById('start-btn');
@@ -15,70 +11,11 @@ const promptInput = document.getElementById('prompt-input');
 const prdStatus = document.getElementById('prd-status');
 const prdNone = document.getElementById('prd-none');
 const prdName = document.getElementById('prd-name');
-const tabBtns = document.querySelectorAll('.tab-btn');
 
 let term = null;
 let fitAddon = null;
 let selectedDir = null;
 let detectedPRD = null;
-
-// Strip ANSI codes for clean chat display
-function stripAnsi(str) {
-  return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\x1b\][^\x07]*\x07/g, '');
-}
-
-// Buffer to accumulate Claude output into chat messages
-let outputBuffer = '';
-let bufferTimeout = null;
-const BUFFER_DELAY = 300; // ms to wait before flushing as a message
-
-function flushOutputToChat() {
-  const cleaned = stripAnsi(outputBuffer).trim();
-  if (cleaned) {
-    addChatMessage('claude', cleaned);
-  }
-  outputBuffer = '';
-  bufferTimeout = null;
-}
-
-function bufferOutput(data) {
-  outputBuffer += data;
-  if (bufferTimeout) clearTimeout(bufferTimeout);
-  bufferTimeout = setTimeout(flushOutputToChat, BUFFER_DELAY);
-}
-
-function addChatMessage(role, text) {
-  const msg = document.createElement('div');
-  msg.className = `chat-msg ${role}`;
-  msg.textContent = text;
-  chatMessages.appendChild(msg);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// Tab switching
-tabBtns.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const tab = btn.dataset.tab;
-
-    tabBtns.forEach((b) => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    if (tab === 'chat') {
-      chatContainer.style.display = 'flex';
-      chatContainer.classList.add('active');
-      terminalContainer.style.display = 'none';
-      terminalContainer.classList.remove('active');
-      chatInput.focus();
-    } else {
-      chatContainer.style.display = 'none';
-      chatContainer.classList.remove('active');
-      terminalContainer.style.display = 'block';
-      terminalContainer.classList.add('active');
-      if (fitAddon) fitAddon.fit();
-      if (term) term.focus();
-    }
-  });
-});
 
 function initTerminal() {
   term = new Terminal({
@@ -104,23 +41,22 @@ function initTerminal() {
 
   fitAddon = new FitAddon();
   term.loadAddon(fitAddon);
-  term.open(terminalContainer);
+  term.open(container);
+  fitAddon.fit();
 
-  // Terminal tab is hidden initially, fit when shown
-  // term.onData sends keystrokes when terminal tab is active
+  // Send user keystrokes to main process → PTY
   term.onData((data) => {
     window.forgeAPI.sendTerminalInput(data);
   });
 
-  // Receive PTY output — goes to both terminal and chat buffer
+  // Receive PTY output from main process
   window.forgeAPI.onTerminalData((data) => {
     term.write(data);
-    bufferOutput(data);
   });
 
   // Handle resize
   const resizeObserver = new ResizeObserver(() => {
-    if (fitAddon && terminalContainer.classList.contains('active')) {
+    if (fitAddon) {
       fitAddon.fit();
       const dims = fitAddon.proposeDimensions();
       if (dims) {
@@ -128,29 +64,11 @@ function initTerminal() {
       }
     }
   });
-  resizeObserver.observe(terminalContainer);
+  resizeObserver.observe(container);
+
+  // Focus terminal
+  term.focus();
 }
-
-// Chat send
-function sendChatMessage() {
-  const text = chatInput.value;
-  if (!text.trim()) return;
-
-  addChatMessage('user', text);
-  // Send to Claude via PTY stdin (add newline to submit)
-  window.forgeAPI.sendTerminalInput(text + '\r');
-  chatInput.value = '';
-  chatInput.focus();
-}
-
-chatSendBtn.addEventListener('click', sendChatMessage);
-
-chatInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendChatMessage();
-  }
-});
 
 // Browse button — open native directory picker
 browseBtn.addEventListener('click', async () => {
@@ -161,6 +79,7 @@ browseBtn.addEventListener('click', async () => {
   dirPathEl.textContent = dirPath;
   dirPathEl.classList.add('selected');
 
+  // Scan for PRD
   const result = await window.forgeAPI.scanForPRD(dirPath);
 
   prdStatus.classList.add('hidden');
@@ -175,40 +94,39 @@ browseBtn.addEventListener('click', async () => {
     prdNone.classList.remove('hidden');
   }
 
+  // Enable start button
   startBtn.disabled = false;
 });
 
-// Launch button
+// Launch button handler
 startBtn.addEventListener('click', () => {
   if (!selectedDir) return;
 
   const prompt = promptInput.value.trim();
 
+  // Hide overlay, show app
   overlay.classList.add('hidden');
   appContainer.classList.remove('hidden');
 
+  // Initialize terminal and spawn Claude in the selected directory
   initTerminal();
   window.forgeAPI.spawnClaude({
     projectDir: selectedDir,
     prompt: prompt || null,
     prdFile: detectedPRD || null,
   });
+});
 
-  chatInput.focus();
+// Allow Enter in textarea to submit (Shift+Enter for newline)
+promptInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    startBtn.click();
+  }
 });
 
 // Handle Claude process exit
 window.forgeAPI.onClaudeExit((data) => {
-  if (bufferTimeout) {
-    clearTimeout(bufferTimeout);
-    flushOutputToChat();
-  }
-
-  const exitMsg = data.code === 0
-    ? '[Process exited normally]'
-    : `[Process exited with code ${data.code}]`;
-  addChatMessage('claude', exitMsg);
-
   if (term) {
     const msg = data.code === 0
       ? '\r\n\x1b[32m[Process exited normally]\x1b[0m\r\n'
