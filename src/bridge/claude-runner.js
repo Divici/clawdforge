@@ -19,15 +19,7 @@ class ClaudeRunner {
       env: { ...process.env, FORCE_COLOR: '1' },
     });
 
-    // Build the workflow command
-    let workflowPrompt = '/workflow';
-    if (prdFile) {
-      workflowPrompt += ` PRD is at ${prdFile}`;
-    }
-    if (prompt) {
-      const escapedPrompt = prompt.replace(/\r?\n/g, ' ');
-      workflowPrompt += ` — ${escapedPrompt}`;
-    }
+    const workflowPrompt = '/workflow';
 
     // Watch output for Claude's ready signal, then send /workflow
     let claudeSent = false;
