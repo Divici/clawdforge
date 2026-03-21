@@ -1,9 +1,9 @@
 // Matrix rain — falling green character columns
 
 const CHARS = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789';
-const CHAR_SIZE = 10;
-const RAIN_OPACITY = 0.18;
-const TRAIL_LENGTH = 12;
+const CHAR_SIZE = 6;
+const RAIN_OPACITY = 0.20;
+const TRAIL_LENGTH = 16;
 
 export class MatrixRain {
   constructor() {

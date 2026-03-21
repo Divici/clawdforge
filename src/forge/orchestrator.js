@@ -40,7 +40,7 @@ export class Orchestrator {
   }
 
   resize(width, height) {
-    this.size = Math.floor(width * 0.5);
+    this.size = Math.floor(width * 0.4);
     this.x = (width - this.size) / 2;
     this.y = -this.size * 0.20;
   }
