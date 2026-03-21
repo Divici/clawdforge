@@ -1,9 +1,8 @@
 // Orchestrator state machine + draw
 // States: idle, dispatching, complete, error
+// Sized to half the panel width, overflows top so only eyes and below are visible
 
 import { drawSprite, loadSprite } from './sprites.js';
-
-const SIZE = 128;
 
 export class Orchestrator {
   constructor() {
@@ -11,11 +10,12 @@ export class Orchestrator {
     this.img = null;
     this.x = 0;
     this.y = 0;
+    this.size = 128;
     this.pulsePhase = 0;
     this.loadPromise = loadSprite('assets/sprites/orchestrator.png').then((img) => {
       this.img = img;
     }).catch(() => {
-      this.img = null; // Fallback to rectangle
+      this.img = null;
     });
   }
 
@@ -27,8 +27,11 @@ export class Orchestrator {
   }
 
   resize(width, height) {
-    this.x = (width - SIZE) / 2;
-    this.y = height * 0.12;
+    // Half the panel width
+    this.size = Math.floor(width * 0.5);
+    this.x = (width - this.size) / 2;
+    // Position so the top ~35% overflows above the canvas (eyes at ~30% from top)
+    this.y = -this.size * 0.35;
   }
 
   update() {
@@ -47,7 +50,7 @@ export class Orchestrator {
         break;
       case 'dispatching':
         alpha = 0.85 + pulse;
-        bob = Math.sin(this.pulsePhase * 0.8) * 2;
+        bob = Math.sin(this.pulsePhase * 0.8) * 3;
         break;
       case 'complete':
         alpha = 1;
@@ -60,30 +63,25 @@ export class Orchestrator {
     }
 
     if (this.img) {
-      drawSprite(ctx, this.img, this.x, this.y, SIZE, SIZE, { alpha, tint, bob });
+      drawSprite(ctx, this.img, this.x, this.y, this.size, this.size, { alpha, tint, bob });
     } else {
       // Fallback rectangle
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.fillStyle = this.state === 'error' ? '#e85555' : '#5b9a5b';
-      ctx.fillRect(this.x, this.y + bob, SIZE, SIZE);
-      // Eye ports
+      ctx.fillRect(this.x, this.y + bob, this.size, this.size);
+      // Eye ports (proportional)
+      const eyeSize = this.size * 0.06;
+      const eyeY = this.y + bob + this.size * 0.25;
       ctx.fillStyle = '#d4d4d4';
-      ctx.fillRect(this.x + 16, this.y + bob + 12, 8, 8);
-      ctx.fillRect(this.x + 40, this.y + bob + 12, 8, 8);
+      ctx.fillRect(this.x + this.size * 0.25, eyeY, eyeSize, eyeSize);
+      ctx.fillRect(this.x + this.size * 0.65, eyeY, eyeSize, eyeSize);
       ctx.restore();
     }
 
-    // Label
-    ctx.save();
-    ctx.font = '10px "Press Start 2P", monospace';
-    ctx.fillStyle = '#4ade80';
-    ctx.globalAlpha = 0.6;
-    ctx.textAlign = 'center';
-    ctx.fillText('ORCHESTRATOR', this.x + SIZE / 2, this.y - 12);
-    ctx.restore();
+    // No label — the looming presence speaks for itself
   }
 
-  get centerX() { return this.x + SIZE / 2; }
-  get bottomY() { return this.y + SIZE; }
+  get centerX() { return this.x + this.size / 2; }
+  get bottomY() { return this.y + this.size; }
 }
