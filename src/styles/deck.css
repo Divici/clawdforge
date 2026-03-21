@@ -293,11 +293,133 @@ html, body {
 .panel-right {
   background: var(--bg-deep);
   border-left: 1px solid var(--green-dim);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab Bar */
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--green-dim);
+  flex-shrink: 0;
+}
+
+.tab-btn {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  padding: 10px 20px;
+  background: transparent;
+  color: var(--green-dim);
+  border: none;
+  cursor: pointer;
+  letter-spacing: 1px;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: var(--green-primary);
+}
+
+.tab-btn.active {
+  color: var(--green-bright);
+  border-bottom-color: var(--green-bright);
+}
+
+/* Tab Content */
+.tab-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.tab-content:not(.active) {
+  display: none !important;
 }
 
 #terminal-container {
   width: 100%;
   height: 100%;
+}
+
+/* Chat Tab */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#chat-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-msg {
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.chat-msg.claude {
+  background: var(--bg-panel);
+  color: var(--white);
+  border-left: 3px solid var(--green-primary);
+}
+
+.chat-msg.user {
+  background: rgba(45, 90, 61, 0.3);
+  color: var(--green-bright);
+  border-left: 3px solid var(--green-bright);
+}
+
+.chat-input-area {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--green-dim);
+  flex-shrink: 0;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 10px 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--green-dim);
+  color: var(--white);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  resize: none;
+  outline: none;
+  border-radius: 2px;
+}
+
+.chat-input:focus {
+  border-color: var(--green-bright);
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.15);
+}
+
+.chat-send-btn {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  padding: 10px 16px;
+  background: var(--green-dim);
+  color: var(--green-bright);
+  border: 1px solid var(--green-primary);
+  cursor: pointer;
+  letter-spacing: 1px;
+  border-radius: 2px;
+  align-self: flex-end;
+}
+
+.chat-send-btn:hover {
+  background: var(--green-primary);
+  color: var(--bg-deep);
 }
 
 /* === CRT Overlay === */
