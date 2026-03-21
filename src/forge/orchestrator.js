@@ -31,7 +31,7 @@ export class Orchestrator {
     this.size = Math.floor(width * 0.5);
     this.x = (width - this.size) / 2;
     // Position so the top ~35% overflows above the canvas (eyes at ~30% from top)
-    this.y = -this.size * 0.35;
+    this.y = -this.size * 0.25;
   }
 
   update() {
