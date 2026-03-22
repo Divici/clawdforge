@@ -113,12 +113,8 @@ ipcMain.on('claude:spawn', (_event, config) => {
   }
   runner = new ClaudeRunner(bus);
   runner.spawn({ projectDir, prompt, prdFile }, (data) => {
-    // Feed to stage parser
+    // Feed to stage parser — markers are extracted and emitted as events
     parser.feed(data);
-    // Forward raw output for debug log in renderer
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('forge:raw-output', data);
-    }
   });
 
   // Initialize forge log

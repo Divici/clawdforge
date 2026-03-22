@@ -20,17 +20,15 @@ test('renders build dashboard container', () => {
   expect(container.querySelector('.build-dashboard')).toBeTruthy();
 });
 
-test('shows raw output fallback initially (no structured markers)', () => {
+test('renders phase stepper', () => {
   const { container } = render(<BuildDashboard />);
-  expect(container.querySelector('.build-dashboard__raw-output')).toBeTruthy();
+  expect(container.querySelector('.phase-stepper')).toBeTruthy();
 });
 
-test('shows phase stepper and card log after structured event', () => {
+test('renders card log with waiting message', () => {
   const { container } = render(<BuildDashboard />);
-  act(() => {
-    forgeEventCallback({ type: 'forge:phase', phase: 'scaffold', phaseNames: ['scaffold', 'auth'] });
-  });
-  expect(container.querySelector('.phase-stepper')).toBeTruthy();
+  expect(container.querySelector('.card-log')).toBeTruthy();
+  expect(container.querySelector('.build-dashboard__waiting')).toBeTruthy();
 });
 
 test('handles forge:phase event to set phases', () => {

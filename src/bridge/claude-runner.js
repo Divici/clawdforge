@@ -1,6 +1,55 @@
 const pty = require('node-pty');
 const path = require('path');
 
+// Forge Output Protocol preamble — injected as Claude's first message
+// so it knows to emit structured markers for the dashboard UI.
+const FORGE_PREAMBLE = `You are running inside Claw'd Forge, a visual dashboard. You MUST emit structured [FORGE:] markers on their own line throughout your output so the dashboard can render interactive UI cards. This is critical — without markers, the user sees nothing.
+
+MARKER FORMAT: [FORGE:TYPE key=value] content
+
+REQUIRED MARKERS — emit these at the appropriate times:
+
+When presenting a question with options:
+[FORGE:QUESTION id=q1] Question text
+[FORGE:OPTION id=q1 recommended=true] OptionName | ✓ pro | ✗ con | Best when: context
+[FORGE:OPTION id=q1] OptionName | ✓ pro | ✗ con | Best when: context
+[FORGE:OPTION_END id=q1]
+
+For open-ended questions (no predefined options):
+[FORGE:TEXT_QUESTION id=q2] Question text
+
+When a decision is locked:
+[FORGE:DECISION] Summary of the locked decision
+
+For requirements registry:
+[FORGE:REGISTRY] [{"id":"R-001","text":"description","priority":"Must-have"}]
+
+Loop/phase transitions:
+[FORGE:LOOP loop=1 name=Constraints]
+[FORGE:MODE mode=presearch]
+[FORGE:MODE mode=build]
+[FORGE:PHASE phase=scaffold total=5 current=1]
+
+During build:
+[FORGE:TASK status=complete] commit message
+[FORGE:AGENT_SPAWN count=3]
+[FORGE:AGENT_DONE count=2]
+[FORGE:BLOCKER type=api-key] Description
+[FORGE:COMPLETE] {"tests":127,"phases":5}
+
+RULES:
+- Emit markers IN ADDITION to your normal output, not instead of it
+- Each marker goes on its own line
+- Increment question ids: q1, q2, q3...
+- For OPTION: separate name, pros (✓), cons (✗), and "Best when:" with pipe |
+- Set recommended=true on your recommended option
+- ALWAYS emit OPTION_END after listing all options for a question
+- For REGISTRY: content is a JSON array
+- Emit LOOP marker at each presearch loop transition
+- Emit MODE marker when switching between presearch and build
+
+Now run the workflow. /workflow`;
+
 class ClaudeRunner {
   constructor(bus) {
     this.bus = bus;
@@ -27,21 +76,18 @@ class ClaudeRunner {
       env: this._buildEnv(),
     });
 
-    const workflowPrompt = '/workflow';
-
-    // Watch output for Claude's ready signal, then send /workflow
+    // Watch output for Claude's ready signal, then send forge preamble + /workflow
     let claudeSent = false;
-    let workflowSent = false;
+    let preambleSent = false;
     let buffer = '';
 
     this.ptyProcess.onData((data) => {
       if (onData) onData(data);
 
-      // Watch for signals to auto-send commands
-      if (!claudeSent || !workflowSent) {
+      if (!claudeSent || !preambleSent) {
         buffer += data;
 
-        // Send claude command after shell prompt appears (e.g., > or $)
+        // Send claude command after shell prompt appears
         if (!claudeSent && buffer.length > 50) {
           claudeSent = true;
           setTimeout(() => {
@@ -49,18 +95,15 @@ class ClaudeRunner {
           }, 300);
         }
 
-        // Wait for Claude's ready indicator (the > prompt or "Human:" or similar)
-        // Claude CLI shows a prompt character when ready for input
-        if (claudeSent && !workflowSent) {
-          // Look for Claude's input prompt — typically ends with a special character
-          // or we see the welcome banner has finished
+        // Wait for Claude CLI to be ready, then send forge preamble + /workflow
+        if (claudeSent && !preambleSent) {
           if (buffer.includes('\\') || buffer.includes('>') || buffer.includes('Human:') || buffer.includes('claude-code') || buffer.includes('Tips')) {
-            // Check if enough time has passed since claude was sent
             const timeSinceClaude = buffer.length;
             if (timeSinceClaude > 500) {
-              workflowSent = true;
+              preambleSent = true;
               setTimeout(() => {
-                this.ptyProcess.write(`${workflowPrompt}\r`);
+                // Send the forge preamble which ends with /workflow
+                this.ptyProcess.write(FORGE_PREAMBLE + '\r');
               }, 1000);
             }
           }

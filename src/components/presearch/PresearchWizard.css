@@ -4,7 +4,7 @@
   gap: 16px;
   padding: 16px;
   height: 100%;
-  max-width: 900px;
+  max-width: 640px;
   margin: 0 auto;
 }
 
@@ -16,68 +16,6 @@
   flex: 1;
 }
 
-/* Fallback terminal-style view */
-.presearch-wizard__fallback {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-.presearch-wizard__output {
-  flex: 1;
-  overflow-y: auto;
-  background: var(--color-surface);
-  border: 1px solid var(--color-tan-dim);
-  border-radius: 8px;
-  padding: 16px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--color-cream);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.presearch-wizard__output-line {
-  padding: 1px 0;
-}
-
-.presearch-wizard__output-line--user {
-  color: var(--color-primary);
-  font-weight: bold;
-  padding: 4px 0;
-}
-
-.presearch-wizard__input-bar {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  align-items: flex-end;
-}
-
-.presearch-wizard__input {
-  flex: 1;
-  background: var(--color-surface);
-  color: var(--color-cream);
-  border: 1px solid var(--color-tan-dim);
-  border-radius: 6px;
-  padding: 10px 12px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  resize: none;
-}
-
-.presearch-wizard__input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.presearch-wizard__input::placeholder {
-  color: var(--color-tan-dim);
-}
-
-/* Waiting state */
 .presearch-wizard__waiting {
   text-align: center;
   padding: 48px 16px;

@@ -28,5 +28,5 @@ test('renders waiting indicator initially', () => {
   const { container } = render(<PresearchWizard />);
   const waiting = container.querySelector('.presearch-wizard__waiting');
   expect(waiting).toBeTruthy();
-  expect(screen.getByText(/Starting Claude/)).toBeTruthy();
+  expect(screen.getByText(/analyzing your project/)).toBeTruthy();
 });
