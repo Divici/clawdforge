@@ -5,9 +5,9 @@ test('renders 2-zone layout', () => {
   const { container } = render(<App />);
   const layout = container.querySelector('.app-layout');
   expect(layout).toBeTruthy();
-  expect(layout.children).toHaveLength(2);
-  expect(layout.children[0].classList.contains('app-layout__dashboard')).toBe(true);
-  expect(layout.children[1].classList.contains('app-layout__stage')).toBe(true);
+  expect(layout.querySelector('.app-layout__dashboard')).toBeTruthy();
+  expect(layout.querySelector('.app-layout__stage')).toBeTruthy();
+  expect(layout.querySelector('.grain-overlay')).toBeTruthy();
 });
 
 test('dashboard zone shows launch screen by default', () => {

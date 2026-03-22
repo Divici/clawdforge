@@ -1,3 +1,21 @@
+/* Stitch Design System — The Monolithic Terminal */
+
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('../assets/fonts/SpaceGrotesk.ttf') format('truetype');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('../assets/fonts/Inter.ttf') format('truetype');
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 @font-face {
   font-family: 'Press Start 2P';
   src: url('../assets/fonts/PressStart2P.ttf') format('truetype');
@@ -7,21 +25,49 @@
 }
 
 :root {
-  /* Palette */
-  --color-bg: #1A1A2E;
-  --color-surface: #252540;
-  --color-surface-hover: #2E2E4A;
-  --color-primary: #E07A4B;
-  --color-primary-dim: #B85E3A;
-  --color-cream: #F5E6D3;
-  --color-tan: #D4A574;
-  --color-tan-dim: #8B7355;
-  --color-success: #5BAE6B;
-  --color-error: #E85555;
+  /* Surface hierarchy — depth via background shifts, not borders */
+  --color-bg: #131313;
+  --color-surface-lowest: #0E0E0E;
+  --color-surface-low: #1C1B1B;
+  --color-surface: #201F1F;
+  --color-surface-high: #2A2A2A;
+  --color-surface-highest: #353534;
+  --color-surface-bright: #3A3939;
+
+  /* Primary — warm peach/orange, used sparingly as "laser pointer" */
+  --color-primary: #FFB59E;
+  --color-primary-container: #D97757;
+  --color-on-primary-container: #541400;
+
+  /* On-surface text hierarchy */
+  --color-on-surface: #E5E2E1;
+  --color-on-surface-variant: #DBC1B9;
+
+  /* Outline — ghost borders at 20% opacity */
+  --color-outline: #A38C85;
+  --color-outline-variant: #55433D;
+
+  /* Semantic colors */
+  --color-tertiary: #5EDAC7;
+  --color-error: #FFB4AB;
+  --color-error-container: #93000A;
   --color-warning: #E8B84B;
 
+  /* Secondary */
+  --color-secondary: #F4B9A7;
+  --color-secondary-container: #653C2F;
+
   /* Typography */
-  --font-pixel: 'Press Start 2P', monospace;
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-sans: system-ui, -apple-system, sans-serif;
+  --font-pixel: 'Press Start 2P', monospace;
+
+  /* Legacy aliases — map old names to new values for gradual migration */
+  --color-surface-hover: var(--color-surface-high);
+  --color-primary-dim: var(--color-primary-container);
+  --color-cream: var(--color-on-surface);
+  --color-tan: var(--color-on-surface-variant);
+  --color-tan-dim: var(--color-outline-variant);
+  --color-success: var(--color-tertiary);
 }

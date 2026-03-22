@@ -31,6 +31,14 @@ describe('global.css', () => {
   });
 
   it('sets body color from theme variable', () => {
-    expect(globalCSS).toMatch(/color:\s*var\(--color-cream\)/);
+    expect(globalCSS).toMatch(/color:\s*var\(--color-on-surface\)/);
+  });
+
+  it('uses Inter as body font', () => {
+    expect(globalCSS).toMatch(/font-family:\s*var\(--font-body\)/);
+  });
+
+  it('includes grain overlay', () => {
+    expect(globalCSS).toMatch(/\.grain-overlay/);
   });
 });

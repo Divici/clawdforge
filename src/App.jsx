@@ -79,6 +79,7 @@ export function App() {
 
   return (
     <div className="app-layout">
+      <div className="grain-overlay" />
       <div className="app-layout__dashboard">
         {mode !== 'launch' && (
           <HeaderBar

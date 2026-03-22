@@ -1,36 +1,68 @@
+/* Stitch: no border separation, background shift */
 .header-bar {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px 20px;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-tan-dim);
+  padding: 12px 24px;
+  background: var(--color-bg);
+  border-bottom: none;
 }
 .header-bar__logo {
-  font-family: var(--font-pixel);
-  font-size: 12px;
-  color: var(--color-primary);
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-primary-container);
+}
+.header-bar__divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(85, 67, 61, 0.3);
 }
 .header-bar__project {
-  color: var(--color-cream);
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  color: var(--color-primary-container);
+  border-left: 2px solid var(--color-primary-container);
+  padding-left: 8px;
 }
 .header-bar__timer {
   margin-left: auto;
-  color: var(--color-tan);
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--color-primary-container);
+  background: var(--color-surface-low);
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header-bar__timer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary-container);
+  animation: timer-pulse 1.5s ease-in-out infinite;
+}
+@keyframes timer-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }
 .header-bar__pause {
   background: none;
-  border: 1px solid var(--color-tan-dim);
-  color: var(--color-cream);
-  padding: 4px 8px;
-  border-radius: 4px;
+  border: none;
+  color: var(--color-outline-variant);
+  padding: 4px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 20px;
+  transition: color 0.15s;
 }
 .header-bar__pause:hover {
-  background: var(--color-surface-hover);
+  color: var(--color-primary-container);
+  background: rgba(217, 119, 87, 0.1);
 }
