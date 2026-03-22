@@ -100,7 +100,7 @@ class ClaudeRunner {
 
     this.ptyProcess = pty.spawn(shell, [], {
       name: 'xterm-256color',
-      cols: 120,
+      cols: 500,
       rows: 30,
       cwd: projectDir,
       env: this._buildEnv(),
