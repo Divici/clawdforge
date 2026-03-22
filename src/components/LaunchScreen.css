@@ -1,0 +1,86 @@
+.launch-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px;
+}
+.launch-screen__dialog {
+  max-width: 560px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.launch-screen__title {
+  font-family: var(--font-pixel);
+  font-size: 24px;
+  color: var(--color-primary);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.launch-screen__label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-tan);
+  text-transform: uppercase;
+}
+.launch-screen__dir-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-surface);
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--color-tan-dim);
+}
+.launch-screen__dir-path {
+  flex: 1;
+  color: var(--color-cream);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.launch-screen__options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.launch-screen__radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-cream);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  cursor: pointer;
+}
+.launch-screen__radio input[type="radio"] {
+  accent-color: var(--color-primary);
+}
+.launch-screen__select {
+  background: var(--color-surface);
+  color: var(--color-cream);
+  border: 1px solid var(--color-tan-dim);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  margin-left: 24px;
+}
+.launch-screen__textarea {
+  background: var(--color-surface);
+  color: var(--color-cream);
+  border: 1px solid var(--color-tan-dim);
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  resize: vertical;
+  margin-left: 24px;
+}
+.launch-screen__textarea::placeholder {
+  color: var(--color-tan-dim);
+}
