@@ -12,7 +12,7 @@ test('renders 2-zone layout', () => {
 
 test('dashboard zone shows launch screen by default', () => {
   render(<App />);
-  expect(screen.getByText('Start Forge')).toBeTruthy();
+  expect(screen.getByText('Start Build')).toBeTruthy();
 });
 
 test('stage zone contains canvas', () => {

@@ -1,86 +1,444 @@
+/* LaunchScreen — Stitch "Initialize Forge Session" card */
+
+/* ── Blinking terminal cursor keyframe ── */
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* ── Full-screen container ── */
 .launch-screen {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
   padding: 40px;
+  position: relative;
+  overflow: hidden;
 }
-.launch-screen__dialog {
-  max-width: 560px;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+
+/* ── Background decorative elements ── */
+.launch-screen__bg-left,
+.launch-screen__bg-right {
+  position: absolute;
+  opacity: 0.2;
+  pointer-events: none;
 }
-.launch-screen__title {
-  font-family: var(--font-pixel);
-  font-size: 24px;
+
+.launch-screen__bg-left {
+  top: 96px;
+  left: 40px;
+  width: 256px;
+}
+
+.launch-screen__bg-right {
+  bottom: 96px;
+  right: 40px;
+  width: 192px;
+}
+
+.launch-screen__bg-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
   color: var(--color-primary);
-  text-align: center;
+  opacity: 0.8;
   margin-bottom: 8px;
 }
-.launch-screen__label {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--color-tan);
-  text-transform: uppercase;
+
+.launch-screen__bg-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-.launch-screen__dir-picker {
+
+.launch-screen__bg-bar {
+  height: 4px;
+  width: 100%;
+  background: var(--color-surface-high);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.launch-screen__bg-bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 9999px;
+}
+
+.launch-screen__bg-log {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--color-outline);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── Glass card ── */
+.launch-screen__card {
+  width: 100%;
+  max-width: 672px;
+  background: rgba(28, 27, 27, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(85, 67, 61, 0.1);
+  border-radius: 4px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  z-index: 10;
+}
+
+/* ── Card header ── */
+.launch-screen__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: var(--color-surface);
+  border-bottom: 1px solid rgba(85, 67, 61, 0.2);
+}
+
+.launch-screen__header-left {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--color-surface);
-  padding: 10px 16px;
-  border-radius: 6px;
-  border: 1px solid var(--color-tan-dim);
 }
-.launch-screen__dir-path {
-  flex: 1;
-  color: var(--color-cream);
+
+.launch-screen__header-icon {
+  font-size: 14px;
+  color: var(--color-primary);
+}
+
+.launch-screen__header-title {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  color: var(--color-on-surface);
+}
+
+.launch-screen__header-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.launch-screen__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(85, 67, 61, 0.3);
+}
+
+/* ── Card body ── */
+.launch-screen__body {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ── Section + label ── */
+.launch-screen__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.launch-screen__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #71717a; /* zinc-500 */
+}
+
+/* ── Directory picker row ── */
+.launch-screen__dir-row {
+  display: flex;
+  gap: 12px;
+}
+
+.launch-screen__dir-picker {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-surface-lowest);
+  border: 1px solid rgba(85, 67, 61, 0.2);
+  border-radius: 2px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.launch-screen__dir-picker:hover {
+  border-color: rgba(255, 181, 158, 0.4);
+}
+
+.launch-screen__dir-path {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-on-surface-variant);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.launch-screen__options {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+
+.launch-screen__dir-icon {
+  font-size: 14px;
+  color: var(--color-outline);
+  transition: color 0.15s;
 }
-.launch-screen__radio {
+
+.launch-screen__dir-picker:hover .launch-screen__dir-icon {
+  color: var(--color-primary);
+}
+
+.launch-screen__browse-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--color-cream);
+  padding: 8px 16px;
+  border: 1px solid rgba(85, 67, 61, 0.2);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--color-on-surface);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.launch-screen__browse-btn:hover {
+  background: var(--color-surface-highest);
+}
+
+.launch-screen__browse-icon {
+  font-size: 14px;
+}
+
+/* ── Resource manifest file grid ── */
+.launch-screen__file-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.launch-screen__file-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--color-surface-lowest);
+  border: 1px solid rgba(85, 67, 61, 0.2);
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.15s;
+}
+
+.launch-screen__file-chip:hover {
+  border-color: rgba(255, 181, 158, 0.3);
+}
+
+.launch-screen__file-chip--selected {
+  border-color: rgba(255, 181, 158, 0.4);
+}
+
+.launch-screen__file-accent {
+  position: absolute;
+  left: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 2px;
+  background: var(--color-primary);
+  border-radius: 1px;
+}
+
+.launch-screen__file-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 2px;
+  background: var(--color-surface-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.launch-screen__file-icon-box--selected {
+  background: rgba(255, 181, 158, 0.1);
+}
+
+.launch-screen__file-icon {
+  font-size: 16px;
+  color: var(--color-primary);
+}
+
+.launch-screen__file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.launch-screen__file-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.launch-screen__file-size {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--color-outline);
+}
+
+/* ── Textarea (Operation Objectives) ── */
+.launch-screen__textarea-wrap {
+  position: relative;
+}
+
+.launch-screen__textarea {
+  width: 100%;
+  background: var(--color-surface-lowest);
+  border: 1px solid rgba(85, 67, 61, 0.2);
+  border-radius: 2px;
+  padding: 16px;
   font-family: var(--font-mono);
   font-size: 14px;
-  cursor: pointer;
+  color: var(--color-on-surface);
+  resize: none;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
 }
-.launch-screen__radio input[type="radio"] {
-  accent-color: var(--color-primary);
+
+.launch-screen__textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
 }
-.launch-screen__select {
-  background: var(--color-surface);
-  color: var(--color-cream);
-  border: 1px solid var(--color-tan-dim);
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  margin-left: 24px;
-}
-.launch-screen__textarea {
-  background: var(--color-surface);
-  color: var(--color-cream);
-  border: 1px solid var(--color-tan-dim);
-  padding: 10px 12px;
-  border-radius: 6px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  resize: vertical;
-  margin-left: 24px;
-}
+
 .launch-screen__textarea::placeholder {
-  color: var(--color-tan-dim);
+  color: #3f3f46; /* zinc-700 */
+}
+
+.launch-screen__cursor {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  width: 8px;
+  height: 16px;
+  background: var(--color-primary-container);
+  animation: blink 1s infinite;
+}
+
+/* hide cursor when textarea has content */
+.launch-screen__textarea:not(:placeholder-shown) ~ .launch-screen__cursor {
+  display: none;
+}
+
+/* ── Footer row ── */
+.launch-screen__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 16px;
+}
+
+.launch-screen__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-outline);
+}
+
+.launch-screen__status-icon {
+  font-size: 12px;
+}
+
+.launch-screen__status-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.launch-screen__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── Resume button ── */
+.launch-screen__resume-btn {
+  padding: 12px 24px;
+  border: 1px solid rgba(85, 67, 61, 0.3);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.launch-screen__resume-btn:hover {
+  background: rgba(217, 119, 87, 0.1);
+  border-color: var(--color-primary-container);
+}
+
+/* ── Start Build button ── */
+.launch-screen__start-btn {
+  padding: 16px 40px;
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  border: none;
+  border-radius: 2px;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+  box-shadow: 0 10px 15px -3px rgba(217, 119, 87, 0.2);
+}
+
+.launch-screen__start-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.launch-screen__start-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.launch-screen__start-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Responsive: hide bg decorations on small screens ── */
+@media (max-width: 1024px) {
+  .launch-screen__bg-left,
+  .launch-screen__bg-right {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .launch-screen__file-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .launch-screen__body {
+    padding: 20px;
+  }
 }
