@@ -6,12 +6,12 @@
 - [x] Bootstrap: memory bank files
 
 ## In Progress
-- [ ] Bootstrap: Preact + Vite + Electron scaffold
-- [ ] Bootstrap: dependency installation
-- [ ] Bootstrap: quality gate verification
+- [ ] bridge — Structured marker parser, stdin translation, forge-log, hidden PTY
+
+## Completed Phases
+- [x] scaffold — 91 tests, 0 lint errors. CSS theme, 2-zone layout, Preact shell, shared components, Electron integration, ESLint
 
 ## Remaining Phases
-- [ ] scaffold — Preact + Vite + Electron, 2-zone layout, Claude palette
 - [ ] bridge — Structured marker parser, stdin translation, forge-log, hidden PTY
 - [ ] launch — Launch screen, resume detection, header bar
 - [ ] presearch-ui — Presearch card components, stepper, wizard
