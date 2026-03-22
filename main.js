@@ -16,8 +16,8 @@ function createWindow() {
     height: 800,
     minWidth: 900,
     minHeight: 500,
-    backgroundColor: '#1e1e2e',
-    title: 'Matrix Forge Command Deck',
+    backgroundColor: '#1A1A2E',
+    title: 'Claw\'d Forge',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -25,7 +25,21 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
+  // Dev: load Vite dev server; Prod: load built files
+  if (!app.isPackaged) {
+    mainWindow.loadURL('http://localhost:5173').catch(() => {
+      // Vite not running — try built output or raw source
+      const builtPath = path.join(__dirname, 'dist-renderer', 'index.html');
+      if (fs.existsSync(builtPath)) {
+        mainWindow.loadFile(builtPath);
+      } else {
+        mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
+      }
+    });
+  } else {
+    mainWindow.loadFile(path.join(__dirname, 'dist-renderer', 'index.html'));
+  }
+
   mainWindow.setMenuBarVisibility(false);
 }
 
