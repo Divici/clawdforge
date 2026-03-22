@@ -3,7 +3,12 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(chmod +x \"c:/Users/doa92/Desktop/Gauntlet Projects/matrixForge/.claude/hooks/protect-env.sh\" \"c:/Users/doa92/Desktop/Gauntlet Projects/matrixForge/.claude/hooks/block-destructive-git.sh\")",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "Bash(cd C:/Users/doa92/Desktop/\"Gauntlet Projects\"/matrixForge/.claude/worktrees/agent-ad3fc7a0)",
+      "Bash(node -e \"require\\(''''@testing-library/preact''''\\)\")",
+      "Bash(mkdir -p test/components)",
+      "Bash(mkdir -p src/components/shared)",
+      "Bash(npx eslint:*)"
     ]
   }
 }
