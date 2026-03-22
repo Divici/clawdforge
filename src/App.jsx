@@ -1,3 +1,5 @@
+import { ClawdStage } from './clawd/ClawdStage';
+
 export function App() {
   return (
     <div className="app-layout">
@@ -5,7 +7,7 @@ export function App() {
         <p>Dashboard</p>
       </div>
       <div className="app-layout__stage">
-        <p>Claw'd Stage</p>
+        <ClawdStage />
       </div>
     </div>
   );

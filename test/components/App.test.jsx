@@ -15,7 +15,9 @@ test('dashboard zone contains content', () => {
   expect(screen.getByText('Dashboard')).toBeTruthy();
 });
 
-test('stage zone contains content', () => {
-  render(<App />);
-  expect(screen.getByText("Claw'd Stage")).toBeTruthy();
+test('stage zone contains canvas', () => {
+  const { container } = render(<App />);
+  const stage = container.querySelector('.app-layout__stage');
+  const canvas = stage.querySelector('canvas');
+  expect(canvas).toBeTruthy();
 });
