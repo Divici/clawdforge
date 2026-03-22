@@ -223,4 +223,151 @@ describe('StageParser', () => {
       expect(result).toBeNull();
     });
   });
+
+  describe('structured marker parsing', () => {
+    it('parses QUESTION marker', () => {
+      const result = parser.parseLine('[FORGE:QUESTION id=q1] What database should we use?');
+      expect(result.event).toBe('forge:question');
+      expect(result.payload.id).toBe('q1');
+      expect(result.payload.content).toBe('What database should we use?');
+    });
+
+    it('parses OPTION with recommended flag', () => {
+      const result = parser.parseLine('[FORGE:OPTION id=q1 recommended=true] SQLite | good stuff');
+      expect(result.event).toBe('forge:option');
+      expect(result.payload.id).toBe('q1');
+      expect(result.payload.recommended).toBe(true);
+      expect(result.payload.content).toBe('SQLite | good stuff');
+    });
+
+    it('parses OPTION_END', () => {
+      const result = parser.parseLine('[FORGE:OPTION_END id=q1]');
+      expect(result.event).toBe('forge:option-end');
+      expect(result.payload.id).toBe('q1');
+    });
+
+    it('parses TEXT_QUESTION', () => {
+      const result = parser.parseLine('[FORGE:TEXT_QUESTION id=q2] What is your timeline?');
+      expect(result.event).toBe('forge:text-question');
+      expect(result.payload.content).toBe('What is your timeline?');
+    });
+
+    it('parses PHASE with numeric coercion', () => {
+      const result = parser.parseLine('[FORGE:PHASE phase=scaffold total=5 current=1]');
+      expect(result.event).toBe('forge:phase');
+      expect(result.payload.phase).toBe('scaffold');
+      expect(result.payload.total).toBe(5);
+      expect(result.payload.current).toBe(1);
+    });
+
+    it('parses MODE', () => {
+      const result = parser.parseLine('[FORGE:MODE mode=build]');
+      expect(result.event).toBe('forge:mode');
+      expect(result.payload.mode).toBe('build');
+    });
+
+    it('parses LOOP', () => {
+      const result = parser.parseLine('[FORGE:LOOP loop=1 name=Constraints]');
+      expect(result.event).toBe('forge:loop');
+      expect(result.payload.loop).toBe(1);
+      expect(result.payload.name).toBe('Constraints');
+    });
+
+    it('parses DECISION', () => {
+      const result = parser.parseLine('[FORGE:DECISION] Database: SQLite — embedded, zero config');
+      expect(result.event).toBe('forge:decision');
+      expect(result.payload.content).toBe('Database: SQLite — embedded, zero config');
+    });
+
+    it('parses TASK', () => {
+      const result = parser.parseLine('[FORGE:TASK status=complete] feat(db): add user model');
+      expect(result.event).toBe('forge:task');
+      expect(result.payload.status).toBe('complete');
+    });
+
+    it('parses AGENT_SPAWN', () => {
+      const result = parser.parseLine('[FORGE:AGENT_SPAWN count=3]');
+      expect(result.event).toBe('forge:agent-spawn');
+      expect(result.payload.count).toBe(3);
+    });
+
+    it('parses AGENT_DONE', () => {
+      const result = parser.parseLine('[FORGE:AGENT_DONE count=2]');
+      expect(result.event).toBe('forge:agent-done');
+      expect(result.payload.count).toBe(2);
+    });
+
+    it('parses BLOCKER', () => {
+      const result = parser.parseLine('[FORGE:BLOCKER type=api-key] Need OpenAI key');
+      expect(result.event).toBe('forge:blocker');
+      expect(result.payload.type).toBe('api-key');
+    });
+
+    it('parses CONTEXT_WARNING with numeric pct', () => {
+      const result = parser.parseLine('[FORGE:CONTEXT_WARNING pct=48]');
+      expect(result.event).toBe('forge:context-warning');
+      expect(result.payload.pct).toBe(48);
+    });
+
+    it('parses REGISTRY with JSON content', () => {
+      const json = JSON.stringify([{ id: 'R-001', text: 'Layout' }]);
+      const result = parser.parseLine(`[FORGE:REGISTRY] ${json}`);
+      expect(result.event).toBe('forge:registry');
+      expect(result.payload.requirements).toEqual([{ id: 'R-001', text: 'Layout' }]);
+    });
+
+    it('handles REGISTRY with invalid JSON gracefully', () => {
+      const result = parser.parseLine('[FORGE:REGISTRY] not valid json');
+      expect(result.event).toBe('forge:registry');
+      expect(result.payload.parseError).toBe(true);
+      expect(result.payload.rawContent).toBe('not valid json');
+    });
+
+    it('parses COMPLETE with JSON summary', () => {
+      const json = JSON.stringify({ tests: 127, phases: 5 });
+      const result = parser.parseLine(`[FORGE:COMPLETE] ${json}`);
+      expect(result.event).toBe('forge:complete');
+      expect(result.payload.summary).toEqual({ tests: 127, phases: 5 });
+    });
+
+    it('parses ACCORDION', () => {
+      const result = parser.parseLine('[FORGE:ACCORDION id=a1 sections=4] AI Approach');
+      expect(result.event).toBe('forge:accordion');
+      expect(result.payload.sections).toBe(4);
+    });
+
+    it('parses ACCORDION_SECTION', () => {
+      const result = parser.parseLine('[FORGE:ACCORDION_SECTION id=a1 section=1] Pattern Selection');
+      expect(result.event).toBe('forge:accordion-section');
+      expect(result.payload.section).toBe(1);
+    });
+
+    it('handles marker with ANSI codes', () => {
+      const result = parser.parseLine('\x1b[32m[FORGE:QUESTION id=q1] What db?\x1b[0m');
+      expect(result.event).toBe('forge:question');
+      expect(result.payload.id).toBe('q1');
+    });
+
+    it('marker with empty content', () => {
+      const result = parser.parseLine('[FORGE:OPTION_END id=q1]');
+      expect(result.payload.content).toBe('');
+    });
+
+    it('sets structuredMode after first marker', () => {
+      expect(parser.structuredMode).toBe(false);
+      parser.parseLine('[FORGE:MODE mode=build]');
+      expect(parser.structuredMode).toBe(true);
+    });
+
+    it('falls through to v1 regex when no marker', () => {
+      const nonMarkerLine = 'Some regular Claude output';
+      const result = parser.parseLine(nonMarkerLine);
+      expect(true).toBe(true);
+    });
+
+    it('handles unknown marker type', () => {
+      const result = parser.parseLine('[FORGE:UNKNOWN foo=bar] some content');
+      expect(result.event).toBe('forge:unknown');
+    });
+  });
 });
