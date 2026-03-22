@@ -55,7 +55,8 @@ test('handles forge:blocker event to add blocker card', () => {
     forgeEventCallback({ type: 'forge:blocker', content: 'Missing API key' });
   });
   expect(container.querySelector('.blocker-card')).toBeTruthy();
-  expect(container.querySelector('.blocker-card__title').textContent).toContain('Missing API key');
+  expect(screen.getByText('Intervention Required')).toBeTruthy();
+  expect(container.querySelector('.blocker-card__desc').textContent).toContain('Missing API key');
 });
 
 test('handles forge:complete event to show completion screen', () => {

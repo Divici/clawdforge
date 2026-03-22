@@ -6,6 +6,11 @@ test('renders failure title', () => {
   expect(screen.getByText('Auth module failed')).toBeTruthy();
 });
 
+test('renders build failure label', () => {
+  render(<FailureCard title="Failed" retryCount={3} />);
+  expect(screen.getByText('Build Failure')).toBeTruthy();
+});
+
 test('shows retry count info', () => {
   render(<FailureCard title="Failed" retryCount={3} />);
   expect(screen.getByText(/Failed after 3 retries/)).toBeTruthy();

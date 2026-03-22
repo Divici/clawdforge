@@ -4,29 +4,31 @@ import './PhaseStepper.css';
 export function PhaseStepper({ phases, currentPhase, completedPhases, stats }) {
   return (
     <div className="phase-stepper">
-      <div className="phase-stepper__phases">
-        {phases.map((name, i) => {
-          const isComplete = completedPhases.includes(name);
-          const isCurrent = currentPhase === name;
-          return (
-            <div key={name} className="phase-stepper__phase">
-              {i > 0 && (
-                <div
-                  className={`phase-stepper__line ${isComplete || isCurrent ? 'phase-stepper__line--active' : ''}`}
-                />
-              )}
-              <div
-                className={`phase-stepper__dot ${isCurrent ? 'phase-stepper__dot--active' : ''} ${isComplete ? 'phase-stepper__dot--complete' : ''}`}
-              >
-                {isComplete ? '✓' : isCurrent ? '◉' : '○'}
-              </div>
-              <span className="phase-stepper__name">{name}</span>
-              {isCurrent && <span className="phase-stepper__status">in progress</span>}
-              {isComplete && <span className="phase-stepper__status">complete</span>}
+      {/* Single connecting line behind all steps */}
+      <div className="phase-stepper__line" />
+      {phases.map((name) => {
+        const isComplete = completedPhases.includes(name);
+        const isCurrent = currentPhase === name;
+        const phaseClass = [
+          'phase-stepper__phase',
+          isCurrent ? 'phase-stepper__phase--active' : '',
+          isComplete ? 'phase-stepper__phase--complete' : '',
+        ].filter(Boolean).join(' ');
+        const dotClass = [
+          'phase-stepper__dot',
+          isCurrent ? 'phase-stepper__dot--active' : '',
+          isComplete ? 'phase-stepper__dot--complete' : '',
+          !isCurrent && !isComplete ? 'phase-stepper__dot--future' : '',
+        ].filter(Boolean).join(' ');
+        return (
+          <div key={name} className={phaseClass}>
+            <div className={dotClass}>
+              {isComplete ? '✓' : isCurrent ? '◉' : '○'}
             </div>
-          );
-        })}
-      </div>
+            <span className="phase-stepper__name">{name}</span>
+          </div>
+        );
+      })}
       {stats && (
         <div className="phase-stepper__stats">
           {stats.agents !== undefined && <Badge>Agents: {stats.agents}</Badge>}

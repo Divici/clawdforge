@@ -1,5 +1,4 @@
 import { useState } from 'preact/hooks';
-import { Card } from '../shared/Card';
 import { Badge } from '../shared/Badge';
 import './TaskCard.css';
 
@@ -9,11 +8,16 @@ export function TaskCard({ title, commit, files, tests, qualityGates, timestamp,
   const timeAgo = timestamp ? formatTimeAgo(timestamp) : '';
 
   return (
-    <Card className={`task-card ${expanded ? 'task-card--expanded' : ''}`} onClick={() => setExpanded(!expanded)}>
+    <div className={`task-card ${expanded ? 'task-card--expanded' : ''}`} onClick={() => setExpanded(!expanded)}>
       <div className="task-card__header">
         <span className="task-card__icon">{expanded ? '◉' : '✓'}</span>
-        <span className="task-card__title">{title}</span>
-        {timeAgo && <span className="task-card__time">{timeAgo}</span>}
+        <div style={{ flex: 1 }}>
+          <span className="task-card__title">{title}</span>
+          {expanded && timestamp && (
+            <p className="task-card__meta">Started {timeAgo}</p>
+          )}
+        </div>
+        {!expanded && timeAgo && <span className="task-card__time">{timeAgo}</span>}
       </div>
       {expanded && (
         <div className="task-card__body">
@@ -39,7 +43,7 @@ export function TaskCard({ title, commit, files, tests, qualityGates, timestamp,
           )}
         </div>
       )}
-    </Card>
+    </div>
   );
 }
 

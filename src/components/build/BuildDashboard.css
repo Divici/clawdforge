@@ -1,16 +1,16 @@
+/* BuildDashboard — Stitch: full-width, no sidebar, centered content */
 .build-dashboard {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  padding: 16px;
-  gap: 16px;
+  padding: 32px;
 }
 
 .build-dashboard__waiting {
   text-align: center;
   padding: 48px 16px;
-  color: var(--color-tan);
+  color: var(--color-on-surface-variant);
   font-family: var(--font-mono);
   font-size: 14px;
 }
@@ -18,7 +18,7 @@
 .build-dashboard__spinner {
   display: block;
   font-size: 24px;
-  color: var(--color-primary);
+  color: var(--color-primary-container);
   margin-bottom: 12px;
   animation: build-pulse 1.5s ease-in-out infinite;
 }

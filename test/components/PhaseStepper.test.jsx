@@ -19,14 +19,16 @@ test('marks completed phases with checkmark', () => {
   expect(dots[0].textContent).toContain('✓');
 });
 
-test('shows "in progress" for current phase', () => {
-  render(<PhaseStepper phases={['scaffold', 'auth']} currentPhase="scaffold" completedPhases={[]} />);
-  expect(screen.getByText('in progress')).toBeTruthy();
+test('active phase has active class on wrapper', () => {
+  const { container } = render(<PhaseStepper phases={['scaffold', 'auth']} currentPhase="scaffold" completedPhases={[]} />);
+  const phases = container.querySelectorAll('.phase-stepper__phase');
+  expect(phases[0].classList.contains('phase-stepper__phase--active')).toBe(true);
 });
 
-test('shows "complete" for completed phases', () => {
-  render(<PhaseStepper phases={['scaffold', 'auth']} currentPhase="auth" completedPhases={['scaffold']} />);
-  expect(screen.getByText('complete')).toBeTruthy();
+test('completed phase has complete class on wrapper', () => {
+  const { container } = render(<PhaseStepper phases={['scaffold', 'auth']} currentPhase="auth" completedPhases={['scaffold']} />);
+  const phases = container.querySelectorAll('.phase-stepper__phase');
+  expect(phases[0].classList.contains('phase-stepper__phase--complete')).toBe(true);
 });
 
 test('renders stats badges when provided', () => {
@@ -35,16 +37,17 @@ test('renders stats badges when provided', () => {
   expect(screen.getByText('Decisions: 12')).toBeTruthy();
 });
 
-test('renders connecting lines between phases', () => {
+test('renders single connecting line behind steps', () => {
   const { container } = render(<PhaseStepper phases={['a', 'b', 'c']} currentPhase="b" completedPhases={['a']} />);
   const lines = container.querySelectorAll('.phase-stepper__line');
-  expect(lines.length).toBe(2);
+  expect(lines.length).toBe(1);
 });
 
-test('active line class on completed/current phase connectors', () => {
-  const { container } = render(<PhaseStepper phases={['a', 'b', 'c']} currentPhase="b" completedPhases={['a']} />);
-  const lines = container.querySelectorAll('.phase-stepper__line');
-  expect(lines[0].classList.contains('phase-stepper__line--active')).toBe(true);
+test('future phases get future dot class', () => {
+  const { container } = render(<PhaseStepper phases={['a', 'b', 'c']} currentPhase="a" completedPhases={[]} />);
+  const dots = container.querySelectorAll('.phase-stepper__dot');
+  expect(dots[1].classList.contains('phase-stepper__dot--future')).toBe(true);
+  expect(dots[2].classList.contains('phase-stepper__dot--future')).toBe(true);
 });
 
 test('does not render stats section when stats is undefined', () => {
