@@ -24,9 +24,9 @@ test('subscribes to forge events on mount', () => {
   expect(window.forgeAPI.onForgeEvent).toHaveBeenCalled();
 });
 
-test('renders empty cards area initially', () => {
+test('renders waiting indicator initially', () => {
   const { container } = render(<PresearchWizard />);
-  const cardsArea = container.querySelector('.presearch-wizard__cards');
-  expect(cardsArea).toBeTruthy();
-  expect(cardsArea.children.length).toBe(0);
+  const waiting = container.querySelector('.presearch-wizard__waiting');
+  expect(waiting).toBeTruthy();
+  expect(screen.getByText(/Starting Claude/)).toBeTruthy();
 });

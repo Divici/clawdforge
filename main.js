@@ -113,8 +113,12 @@ ipcMain.on('claude:spawn', (_event, config) => {
   }
   runner = new ClaudeRunner(bus);
   runner.spawn({ projectDir, prompt, prdFile }, (data) => {
-    // Feed to stage parser only — no raw terminal output to renderer (R-027)
+    // Feed to stage parser
     parser.feed(data);
+    // Forward raw output for debug log in renderer
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('forge:raw-output', data);
+    }
   });
 
   // Initialize forge log

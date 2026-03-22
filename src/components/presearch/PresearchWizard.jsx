@@ -11,6 +11,8 @@ export function PresearchWizard() {
   const [currentLoop, setCurrentLoop] = useState(1);
   const [completedLoops, setCompletedLoops] = useState([]);
   const [cards, setCards] = useState([]);
+  const [rawLines, setRawLines] = useState([]);
+  const [waiting, setWaiting] = useState(true);
   const pendingQuestion = useRef(null);
   const pendingOptions = useRef([]);
 
@@ -56,6 +58,7 @@ export function PresearchWizard() {
 
         case 'forge:option-end':
           if (pendingQuestion.current) {
+            setWaiting(false);
             setCards(prev => [...prev, {
               type: 'question',
               id: pendingQuestion.current.id,
@@ -68,10 +71,12 @@ export function PresearchWizard() {
           break;
 
         case 'forge:text-question':
+          setWaiting(false);
           setCards(prev => [...prev, { type: 'text', id: event.id, question: event.content }]);
           break;
 
         case 'forge:decision':
+          setWaiting(false);
           setCards(prev => [...prev, { type: 'decision', summary: event.content }]);
           break;
 
@@ -84,6 +89,20 @@ export function PresearchWizard() {
     };
 
     window.forgeAPI.onForgeEvent(handleEvent);
+
+    // Capture raw output for fallback display while waiting for structured markers
+    if (window.forgeAPI.onRawOutput) {
+      window.forgeAPI.onRawOutput((text) => {
+        // Strip ANSI codes for display
+        const clean = text.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').trim();
+        if (clean) {
+          setRawLines(prev => {
+            const next = [...prev, clean];
+            return next.slice(-20); // Keep last 20 lines
+          });
+        }
+      });
+    }
   }, []);
 
   const handleSelect = useCallback((id, option) => {
@@ -114,6 +133,19 @@ export function PresearchWizard() {
     <div className="presearch-wizard">
       <PresearchStepper currentLoop={currentLoop} completedLoops={completedLoops} />
       <div className="presearch-wizard__cards">
+        {waiting && (
+          <div className="presearch-wizard__waiting">
+            <div className="presearch-wizard__spinner">●</div>
+            <p className="presearch-wizard__waiting-text">Starting Claude — waiting for presearch to begin...</p>
+            {rawLines.length > 0 && (
+              <div className="presearch-wizard__raw-output">
+                {rawLines.map((line, i) => (
+                  <div key={i} className="presearch-wizard__raw-line">{line}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         {cards.map((card, i) => {
           switch (card.type) {
             case 'question':

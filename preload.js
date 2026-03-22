@@ -17,6 +17,9 @@ contextBridge.exposeInMainWorld('forgeAPI', {
   // Forge events (parsed stage events)
   onForgeEvent: (callback) => ipcRenderer.on('forge:event', (_event, data) => callback(data)),
 
+  // Raw Claude output (for debug/waiting display)
+  onRawOutput: (callback) => ipcRenderer.on('forge:raw-output', (_event, data) => callback(data)),
+
   // Forge response (dashboard -> Claude stdin)
   sendForgeResponse: (action, payload) => ipcRenderer.send('forge:respond', { action, payload }),
 
