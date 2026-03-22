@@ -55,6 +55,7 @@ export function PresearchWizard() {
           const name = parts[0] || '';
           const pros = [];
           const cons = [];
+          const descriptions = [];
           let bestWhen = '';
           for (let i = 1; i < parts.length; i++) {
             const p = parts[i];
@@ -67,12 +68,13 @@ export function PresearchWizard() {
             } else if (p.toLowerCase().startsWith('best when:')) {
               bestWhen = p.slice(10).trim();
             } else if (p) {
-              // No prefix — treat as a pro if non-empty
-              pros.push(p);
+              // No prefix — collect as description text
+              descriptions.push(p);
             }
           }
           pendingOptions.current = [...pendingOptions.current, {
             name, pros, cons, bestWhen,
+            description: descriptions.join('. '),
             recommended: event.recommended === true,
           }];
           break;
