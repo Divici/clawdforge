@@ -4,21 +4,25 @@
 - [x] PRESEARCH.md locked and approved
 - [x] Bootstrap: .claude/ config, hooks, skills
 - [x] Bootstrap: memory bank files
+- [x] scaffold — Preact + Vite + Electron, 2-zone layout, Claude palette
+- [x] bridge — Structured marker parser, stdin translation, forge-log, hidden PTY
+- [x] launch — Launch screen, resume detection, header bar
+- [x] presearch-ui — Presearch card components, stepper, wizard
+- [x] build-ui — Phase stepper, card log, intervention cards, pause/resume
+- [x] clawd-stage — Canvas mascot, costumes, subagent helpers
+- [x] polish — Forge events wired to Claw'd stage costumes and helpers
+- [x] polish — useForgeEvents and useForgeAPI hooks extracted
+- [x] polish — ProConList shared component
+- [x] polish — electron-builder.yml finalized (branding, file includes)
+- [x] polish — App.jsx mode switching handles full lifecycle
 
 ## In Progress
-- [ ] bridge — Structured marker parser, stdin translation, forge-log, hidden PTY
+- [ ] polish — Sprite assets for costumes
+- [ ] polish — End-to-end testing with real forge process
 
-## Completed Phases
-- [x] scaffold — 91 tests, 0 lint errors. CSS theme, 2-zone layout, Preact shell, shared components, Electron integration, ESLint
-
-## Remaining Phases
-- [ ] bridge — Structured marker parser, stdin translation, forge-log, hidden PTY
-- [ ] launch — Launch screen, resume detection, header bar
-- [ ] presearch-ui — Presearch card components, stepper, wizard
-- [ ] build-ui — Phase stepper, card log, intervention cards, pause/resume
-- [ ] clawd-stage — Canvas mascot, costumes, subagent helpers
+## Remaining
 - [ ] skill-mods — Forge Output Protocol in skill files
-- [ ] polish — Sprites, resize, packaging, branding
+- [ ] Final production build and packaging test
 
 ## Known Issues
-- (none yet)
+- (none)

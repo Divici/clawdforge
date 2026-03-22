@@ -50,3 +50,7 @@
   color: var(--color-tan);
 }
 .btn--secondary:hover { background: var(--color-surface-hover); }
+
+/* ProConList */
+.pro-con-list__pro { color: var(--color-success); }
+.pro-con-list__con { color: var(--color-tan-dim); }
