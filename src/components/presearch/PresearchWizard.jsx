@@ -109,12 +109,8 @@ export function PresearchWizard() {
   const handleSelect = useCallback((id, option) => {
     setThinking(true);
     addDiagnostic('log', `User selected: ${option.name}`);
-    // Replace the question card with a locked decision card
-    setCards(prev => prev.map(card =>
-      card.type === 'question' && card.id === id
-        ? { type: 'decision', summary: `${card.question}: ${option.name}` }
-        : card
-    ));
+    // Remove the answered question — Claude's forge:decision event will add the lock card
+    setCards(prev => prev.filter(card => !(card.type === 'question' && card.id === id)));
     if (window.forgeAPI) {
       if (option.recommended) {
         window.forgeAPI.sendForgeResponse('select-recommended', { name: option.name });
@@ -129,12 +125,8 @@ export function PresearchWizard() {
   const handleTextSubmit = useCallback((id, text) => {
     setThinking(true);
     addDiagnostic('log', 'User submitted text response');
-    // Replace the text card with a locked decision card
-    setCards(prev => prev.map(card =>
-      card.type === 'text' && card.id === id
-        ? { type: 'decision', summary: text }
-        : card
-    ));
+    // Remove the answered text card — Claude's forge:decision event will add the lock card
+    setCards(prev => prev.filter(card => !(card.type === 'text' && card.id === id)));
     if (window.forgeAPI) {
       window.forgeAPI.sendForgeResponse('custom-text', { text });
     }
