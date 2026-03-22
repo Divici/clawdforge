@@ -44,8 +44,7 @@ html, body {
 .app-layout__dashboard {
   flex: 1;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
+  /* No flex here — children use natural document flow so sticky works */
 }
 
 .app-layout__stage {

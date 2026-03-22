@@ -8,7 +8,7 @@ import { DiagnosticFeed } from './DiagnosticFeed';
 import './PresearchWizard.css';
 
 export function PresearchWizard() {
-  const [currentLoop, setCurrentLoop] = useState(0);
+  const [currentLoop, setCurrentLoop] = useState(1);
   const [currentLoopName, setCurrentLoopName] = useState('');
   const [completedLoops, setCompletedLoops] = useState([]);
   const [cards, setCards] = useState([]);
