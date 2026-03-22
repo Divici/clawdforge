@@ -58,9 +58,18 @@ export function PresearchWizard() {
           let bestWhen = '';
           for (let i = 1; i < parts.length; i++) {
             const p = parts[i];
-            if (p.startsWith('\u2713')) pros.push(p.slice(1).trim());
-            else if (p.startsWith('\u2717')) cons.push(p.slice(1).trim());
-            else if (p.toLowerCase().startsWith('best when:')) bestWhen = p.slice(10).trim();
+            if (p.startsWith('\u2713')) {
+              const text = p.slice(1).trim();
+              if (text) pros.push(text);
+            } else if (p.startsWith('\u2717')) {
+              const text = p.slice(1).trim();
+              if (text) cons.push(text);
+            } else if (p.toLowerCase().startsWith('best when:')) {
+              bestWhen = p.slice(10).trim();
+            } else if (p) {
+              // No prefix — treat as a pro if non-empty
+              pros.push(p);
+            }
           }
           pendingOptions.current = [...pendingOptions.current, {
             name, pros, cons, bestWhen,
