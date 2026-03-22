@@ -1,53 +1,274 @@
-.completion-screen {
+/* CompletionScreen — Stitch Design */
+
+.cs {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px;
+  flex: 1;
+}
+
+/* ── Hero Section ─────────────────────────────── */
+
+.cs-hero {
+  display: grid;
+  grid-template-columns: 8fr 4fr;
+  gap: 16px;
+}
+
+.cs-hero__left {
+  background: var(--color-surface-low);
+  border-left: 4px solid var(--color-primary-container);
+  border-radius: 2px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cs-hero__status {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-primary-container);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cs-hero__title {
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.cs-hero__desc {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-on-surface-variant);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.cs-hero__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cs-hero__right {
+  background: var(--color-surface-lowest);
+  border: 1px solid rgba(85, 67, 61, 0.15);
+  border-radius: 2px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 32px;
-  gap: 20px;
-  flex: 1;
+  gap: 16px;
 }
 
-.completion-screen__title {
-  font-family: var(--font-pixel);
-  font-size: 18px;
-  color: var(--color-success);
+/* ── Mascot ───────────────────────────────────── */
+
+.cs-mascot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 2px;
+}
+
+.cs-mascot__sprite {
+  font-size: 64px;
+  line-height: 1;
+}
+
+.cs-mascot__validation {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-tertiary);
+  letter-spacing: 0.05em;
+}
+
+/* ── Metrics Bento Grid ──────────────────────── */
+
+.cs-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.cs-metric {
+  background: var(--color-surface-low);
+  border: 1px solid rgba(85, 67, 61, 0.1);
+  border-radius: 2px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s;
+}
+
+.cs-metric:hover {
+  border-color: var(--color-primary-container);
+}
+
+.cs-metric__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cs-metric__icon {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-on-surface-variant);
+}
+
+.cs-metric__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-on-surface-variant);
+}
+
+.cs-metric__value {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  line-height: 1;
+}
+
+.cs-metric__subtitle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-on-surface-variant);
+}
+
+/* ── Detail Section ──────────────────────────── */
+
+.cs-detail {
+  display: grid;
+  grid-template-columns: 8fr 4fr;
+  gap: 16px;
+}
+
+.cs-detail__left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cs-detail__right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cs-detail__heading {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-on-surface-variant);
   margin: 0;
 }
 
-.completion-screen__stats {
+/* ── Deploy Card ─────────────────────────────── */
+
+.cs-deploy-card {
+  background: var(--color-surface);
+  border-radius: 2px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cs-deploy-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs-deploy-card__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-tertiary);
+  flex-shrink: 0;
+}
+
+.cs-deploy-card__label {
   font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--color-cream);
-  text-align: center;
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
 }
 
-.completion-screen__stats p {
-  margin: 4px 0;
+.cs-deploy-card__url {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-primary-container);
+  text-decoration: none;
 }
 
-.completion-screen__stats a {
-  color: var(--color-primary);
+.cs-deploy-card__url:hover {
   text-decoration: underline;
 }
 
-.completion-screen__issues {
+/* ── Build Log ───────────────────────────────── */
+
+.cs-build-log {
+  background: var(--color-surface-lowest);
+  border-radius: 2px;
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-on-surface-variant);
+  line-height: 1.6;
+}
+
+.cs-build-log__line {
+  white-space: pre-wrap;
+}
+
+/* ── Issues List ─────────────────────────────── */
+
+.cs-issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cs-issue {
+  border-left: 3px solid var(--color-outline-variant);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--color-warning);
-  max-width: 480px;
+  color: var(--color-on-surface);
 }
 
-.completion-screen__issues h3 {
-  font-size: 13px;
-  color: var(--color-cream);
-  margin: 0 0 8px;
+.cs-issue[data-severity="error"] {
+  border-left-color: var(--color-error);
 }
 
-.completion-screen__issues p {
-  margin: 2px 0;
+.cs-issue[data-severity="warning"] {
+  border-left-color: var(--color-warning);
 }
 
-.completion-screen__actions {
-  margin-top: 16px;
+.cs-issue__id {
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+  flex-shrink: 0;
+}
+
+.cs-issue__desc {
+  flex: 1;
 }

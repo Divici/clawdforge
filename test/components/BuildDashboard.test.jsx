@@ -64,8 +64,8 @@ test('handles forge:complete event to show completion screen', () => {
   act(() => {
     forgeEventCallback({ type: 'forge:complete', summary: { tests: 42 } });
   });
-  expect(screen.getByText(/Build Complete/)).toBeTruthy();
-  expect(screen.getByText('Tests passing: 42')).toBeTruthy();
+  expect(screen.getByText(/Forge Completion/)).toBeTruthy();
+  expect(screen.getByText('42')).toBeTruthy();
 });
 
 test('calls onComplete callback on forge:complete', () => {
