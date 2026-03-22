@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Claw'd Forge - Launch Mode</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "inverse-surface": "#e5e2e1",
+                        "on-tertiary-container": "#00312b",
+                        "surface-container": "#201f1f",
+                        "on-surface": "#e5e2e1",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-primary-fixed": "#390b00",
+                        "tertiary": "#5edac7",
+                        "outline-variant": "#55433d",
+                        "surface-container-high": "#2a2a2a",
+                        "background": "#131313",
+                        "on-primary-container": "#541400",
+                        "on-primary-fixed-variant": "#7a2f15",
+                        "on-background": "#e5e2e1",
+                        "tertiary-fixed": "#7df7e3",
+                        "tertiary-container": "#09a493",
+                        "surface-container-low": "#1c1b1b",
+                        "on-surface-variant": "#dbc1b9",
+                        "error-container": "#93000a",
+                        "secondary-container": "#653c2f",
+                        "on-tertiary-fixed-variant": "#005047",
+                        "tertiary-fixed-dim": "#5edac7",
+                        "on-secondary-fixed": "#321208",
+                        "primary-fixed": "#ffdbd0",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#ffb59e",
+                        "primary": "#ffb59e",
+                        "primary-container": "#d97757",
+                        "on-tertiary": "#003731",
+                        "on-secondary": "#4b271b",
+                        "on-tertiary-fixed": "#00201c",
+                        "surface-dim": "#131313",
+                        "outline": "#a38c85",
+                        "secondary": "#f4b9a7",
+                        "secondary-fixed-dim": "#f4b9a7",
+                        "on-error": "#690005",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed-variant": "#653c2f",
+                        "surface-bright": "#3a3939",
+                        "surface-container-highest": "#353534",
+                        "surface-tint": "#ffb59e",
+                        "on-primary": "#5c1902",
+                        "surface": "#131313",
+                        "inverse-on-surface": "#313030",
+                        "surface-variant": "#353534",
+                        "on-secondary-container": "#e1a897",
+                        "secondary-fixed": "#ffdbd0",
+                        "inverse-primary": "#99462a"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Space Grotesk"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #131313;
+            font-family: 'Inter', sans-serif;
+            color: #e5e2e1;
+            margin: 0;
+            overflow: hidden;
+        }
+        .mono-text { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel {
+            background: rgba(28, 27, 27, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        .terminal-cursor {
+            width: 8px;
+            height: 16px;
+            background-color: #D97757;
+            display: inline-block;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+        .grain-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.02;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background selection:bg-primary-container selection:text-on-primary-container">
+<div class="grain-overlay"></div>
+<!-- TopNavBar -->
+<nav class="bg-[#131313] dark:bg-[#131313] fixed top-0 w-full z-50 flex justify-between items-center px-6 py-3 border-none">
+<div class="flex items-center gap-8">
+<span class="text-lg font-bold tracking-tighter text-[#D97757] font-headline">Claw'd Forge</span>
+<div class="hidden md:flex gap-6 items-center">
+<div class="text-[#D97757] border-l-2 border-[#D97757] pl-2 font-mono uppercase tracking-widest text-xs font-bold Space Grotesk">Project: Alpha-1</div>
+<div class="text-zinc-500 font-mono uppercase tracking-widest text-xs font-bold Space Grotesk">00:00:00</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-zinc-500 hover:bg-[#D97757]/10 hover:text-[#D97757] transition-colors p-2 rounded active:scale-95 duration-100">
+<span class="material-symbols-outlined text-sm">pause</span>
+</button>
+<button class="text-zinc-500 hover:bg-[#D97757]/10 hover:text-[#D97757] transition-colors p-2 rounded active:scale-95 duration-100">
+<span class="material-symbols-outlined text-sm">settings</span>
+</button>
+<button class="text-zinc-500 hover:bg-[#D97757]/10 hover:text-[#D97757] transition-colors p-2 rounded active:scale-95 duration-100">
+<span class="material-symbols-outlined text-sm">terminal</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant/20">
+<img alt="User Persona" class="w-full h-full object-cover" data-alt="Stylized portrait of a software engineer user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJwNYb7wOGzzwvDR55N0YOuWs9XfbsA8gANDG61uf1HyDOtSSHzFACoc5Jyha9FN59kYyX4Kmx9pPffEBdZz-vZj2xIngMh2szcCrEZtzQmOoh0xdh0I2cpKh1tmtczOY08VcUBQC-PnFrGTmBxMrUIGJQY7In3anTtjbaqsMTQWYu1AJQFd6CEVYV484lZG-UTrn6njclWBBvO8ZOPe1Fl2ERv-UA6mvDOlIsKa9MNB7o-1C9f73BHRVuo6v2CC-1PPdc0XUSbkLL"/>
+</div>
+</div>
+</nav>
+<!-- Main Workspace -->
+<main class="pt-20 pb-16 h-screen w-full flex flex-col items-center justify-center px-4 overflow-hidden relative">
+<!-- Backdrop Ambient Glow -->
+<div class="absolute inset-0 bg-radial-gradient from-primary/5 to-transparent pointer-events-none"></div>
+<!-- Launch Dialog: Centered Monolith -->
+<div class="w-full max-w-2xl bg-surface-container-low border border-outline-variant/10 rounded-lg shadow-2xl overflow-hidden glass-panel z-10">
+<div class="px-6 py-4 bg-surface-container border-b border-outline-variant/20 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-sm">rocket_launch</span>
+<span class="font-mono text-xs uppercase tracking-widest font-bold">Initialize Forge Session</span>
+</div>
+<div class="flex gap-1.5">
+<div class="w-2.5 h-2.5 rounded-full bg-outline-variant/30"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-outline-variant/30"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-outline-variant/30"></div>
+</div>
+</div>
+<div class="p-8 space-y-8">
+<!-- Folder Picker Section -->
+<div class="space-y-3">
+<label class="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Target Environment</label>
+<div class="flex gap-3">
+<div class="flex-grow bg-surface-container-lowest border border-outline-variant/20 rounded px-4 py-3 flex items-center justify-between group hover:border-primary/40 transition-colors cursor-pointer">
+<span class="mono-text text-sm text-on-surface-variant">/volumes/projects/forge/alpha_01</span>
+<span class="material-symbols-outlined text-zinc-600 group-hover:text-primary transition-colors">folder_open</span>
+</div>
+<button class="px-4 py-2 border border-outline-variant/20 rounded hover:bg-surface-container-highest transition-colors flex items-center gap-2 mono-text text-xs uppercase font-bold">
+<span class="material-symbols-outlined text-sm">search</span>
+                            Browse
+                        </button>
+</div>
+</div>
+<!-- File Selection Grid -->
+<div class="space-y-3">
+<label class="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Resource Manifest</label>
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-surface-container-lowest border border-outline-variant/20 p-3 rounded flex items-center gap-3 hover:border-primary/30 transition-colors cursor-pointer group">
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-lg">description</span>
+</div>
+<div>
+<div class="mono-text text-xs text-on-surface">config.json</div>
+<div class="mono-text text-[9px] text-zinc-600">4.2 KB</div>
+</div>
+<span class="material-symbols-outlined ml-auto text-primary opacity-0 group-hover:opacity-100">check_circle</span>
+</div>
+<div class="bg-surface-container-lowest border border-primary/40 p-3 rounded flex items-center gap-3 hover:border-primary/60 transition-colors cursor-pointer group relative">
+<div class="absolute left-0 top-1/4 bottom-1/4 w-0.5 bg-primary"></div>
+<div class="w-8 h-8 rounded bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-lg">code</span>
+</div>
+<div>
+<div class="mono-text text-xs text-on-surface">main.py</div>
+<div class="mono-text text-[9px] text-zinc-600">12.8 KB</div>
+</div>
+<span class="material-symbols-outlined ml-auto text-primary">check_circle</span>
+</div>
+</div>
+</div>
+<!-- Build Description -->
+<div class="space-y-3">
+<label class="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">Operation Objectives</label>
+<div class="relative">
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded p-4 mono-text text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none resize-none placeholder-zinc-700" placeholder="Awaiting directives..." rows="4"></textarea>
+<div class="absolute bottom-4 left-4 flex items-center gap-1">
+<span class="terminal-cursor"></span>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<div class="pt-4 flex items-center justify-between">
+<div class="flex items-center gap-2 text-zinc-600">
+<span class="material-symbols-outlined text-xs">info</span>
+<span class="mono-text text-[10px] uppercase">Alpha-1-Core-Ready</span>
+</div>
+<button class="bg-primary-container text-on-primary-container px-10 py-4 rounded font-headline font-bold uppercase tracking-widest text-sm hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20">
+                        Start Build
+                    </button>
+</div>
+</div>
+</div>
+<!-- Dashboard Background Elements (Terminal Stubs) -->
+<div class="absolute top-24 left-10 w-64 opacity-20 hidden lg:block">
+<div class="mono-text text-[10px] text-primary/80 mb-2">NETWORK_STATUS</div>
+<div class="space-y-1">
+<div class="h-1 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-3/4"></div>
+</div>
+<div class="h-1 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-1/2"></div>
+</div>
+<div class="h-1 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-5/6"></div>
+</div>
+</div>
+</div>
+<div class="absolute bottom-24 right-10 w-48 opacity-20 hidden lg:block">
+<div class="mono-text text-[10px] text-zinc-500 mb-2">SYSTEM_LOG_O2</div>
+<div class="mono-text text-[9px] text-zinc-600 space-y-1">
+<div>&gt; Kernel localized...</div>
+<div>&gt; Assets tethered...</div>
+<div>&gt; Lobster stage hot...</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar / Mascot Stage -->
+<footer class="bg-[#0E0E0E] dark:bg-[#0E0E0E] fixed bottom-0 left-0 w-full z-50 flex justify-center items-center px-4 h-12 border-t border-[#D97757]/20">
+<div class="max-w-6xl w-full flex justify-between items-center h-full">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">pets</span>
+<span class="text-[#D97757] font-mono text-[10px] uppercase tracking-[0.2em]">Mascot Stage</span>
+<span class="terminal-cursor !w-1 !h-3 ml-1"></span>
+</div>
+<!-- Lobster Mascot Representation -->
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 group cursor-pointer">
+<div class="w-6 h-6 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-lg">water_drop</span>
+</div>
+<span class="font-mono text-[9px] text-zinc-500 group-hover:text-primary transition-colors uppercase">Hydration: 98%</span>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant/20"></div>
+<div class="flex items-center gap-4">
+<div class="relative w-10 h-10 -mt-2 group">
+<div class="absolute inset-0 bg-primary/20 blur-lg rounded-full animate-pulse group-hover:bg-primary/40"></div>
+<img alt="Mascot Avatar" class="w-full h-full object-contain relative z-10" data-alt="Cybernetic lobster mascot avatar with neon orange details" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBvlvIqWFV_Q8q1Srm_eGLxUyneFolg_ErO-s_hiHNM5nLy3G3Kk1UpMPBOKRFLboHJYvJvngBK055ngifMNzTO_n9zr4kFdT7qMWB0iVhFEoYNQpbOsBymy_N9uoYvLWeojifxxOijmmXXg0qq8oS6scGMqxKFa4IY2_ZjA2LaHFxZCuchKZUGSX83XPVESLuZTCqKjmekVVaLsY8XF4dJzOEAN6jcqqM4_obPN37LTnx3AnBH_nZHCOfhTaonHl8gt6_zezCwPK4"/>
+</div>
+</div>
+</div>
+<div class="hidden md:flex gap-4">
+<span class="mono-text text-[10px] text-zinc-600">v0.92-beta</span>
+<span class="mono-text text-[10px] text-zinc-600">lat: 42.3601 n</span>
+</div>
+</div>
+</footer>
+</body></html>

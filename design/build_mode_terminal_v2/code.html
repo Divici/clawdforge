@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-fixed-variant": "#005047",
+                        "on-secondary": "#4b271b",
+                        "error": "#ffb4ab",
+                        "on-tertiary-container": "#00312b",
+                        "secondary": "#f4b9a7",
+                        "secondary-container": "#653c2f",
+                        "surface-container-low": "#1c1b1b",
+                        "inverse-on-surface": "#313030",
+                        "on-background": "#e5e2e1",
+                        "primary": "#ffb59e",
+                        "surface-dim": "#131313",
+                        "on-secondary-fixed": "#321208",
+                        "inverse-primary": "#99462a",
+                        "tertiary-fixed-dim": "#5edac7",
+                        "surface-container": "#201f1f",
+                        "primary-fixed-dim": "#ffb59e",
+                        "on-primary-fixed": "#390b00",
+                        "tertiary-fixed": "#7df7e3",
+                        "on-primary": "#5c1902",
+                        "on-primary-container": "#541400",
+                        "tertiary-container": "#09a493",
+                        "tertiary": "#5edac7",
+                        "on-tertiary-fixed": "#00201c",
+                        "on-surface-variant": "#dbc1b9",
+                        "secondary-fixed": "#ffdbd0",
+                        "primary-container": "#d97757",
+                        "on-error-container": "#ffdad6",
+                        "outline-variant": "#55433d",
+                        "surface-container-lowest": "#0e0e0e",
+                        "inverse-surface": "#e5e2e1",
+                        "on-tertiary": "#003731",
+                        "on-surface": "#e5e2e1",
+                        "on-error": "#690005",
+                        "error-container": "#93000a",
+                        "primary-fixed": "#ffdbd0",
+                        "surface-variant": "#353534",
+                        "surface-container-high": "#2a2a2a",
+                        "secondary-fixed-dim": "#f4b9a7",
+                        "on-secondary-fixed-variant": "#653c2f",
+                        "on-primary-fixed-variant": "#7a2f15",
+                        "surface-container-highest": "#353534",
+                        "background": "#131313",
+                        "surface-tint": "#ffb59e",
+                        "outline": "#a38c85",
+                        "on-secondary-container": "#e1a897",
+                        "surface-bright": "#3a3939",
+                        "surface": "#131313"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Space Grotesk"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            font-family: 'Inter', sans-serif;
+        }
+        .terminal-glow {
+            box-shadow: 0 0 15px rgba(217, 119, 87, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0e0e0e;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+        }
+    </style>
+</head>
+<body class="bg-surface select-none overflow-hidden h-screen flex">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-full flex flex-col items-center py-8 z-40 bg-[#1C1B1B] w-20 no-line boundary shift">
+<div class="mb-10 text-[#D97757]">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">terminal</span>
+</div>
+<div class="flex flex-col gap-8 flex-1">
+<div class="flex flex-col items-center gap-1 group cursor-pointer transition-all duration-200 ease-in-out text-[#55433D] hover:text-[#D97757]">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+<span class="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase">Workspace</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer transition-all duration-200 ease-in-out border-l-2 border-[#D97757] text-[#D97757] bg-[#201F1F] w-20 py-2">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+<span class="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase">Build</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer transition-all duration-200 ease-in-out text-[#55433D] hover:text-[#D97757]">
+<span class="material-symbols-outlined" data-icon="folder_open">folder_open</span>
+<span class="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase">Assets</span>
+</div>
+<div class="flex flex-col items-center gap-1 group cursor-pointer transition-all duration-200 ease-in-out text-[#55433D] hover:text-[#D97757]">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+<span class="font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase">Intervention</span>
+</div>
+</div>
+<div class="mt-auto flex flex-col gap-6">
+<div class="flex flex-col items-center gap-1 text-[#55433D] hover:text-[#D97757] cursor-pointer">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-[#55433D] hover:text-[#D97757] cursor-pointer">
+<span class="material-symbols-outlined" data-icon="list_alt">list_alt</span>
+</div>
+</div>
+</nav>
+<!-- Main Workspace -->
+<main class="ml-20 flex-1 flex flex-col h-full relative">
+<!-- TopAppBar -->
+<header class="bg-[#131313] text-[#D97757] flex justify-between items-center w-full px-6 py-3 border-b border-outline-variant/10 z-30">
+<div class="flex items-center gap-6">
+<span class="text-xl font-black text-[#D97757] tracking-tighter">CLAW'D FORGE</span>
+<div class="h-4 w-[1px] bg-outline-variant/30"></div>
+<div class="flex flex-col">
+<span class="font-['JetBrains_Mono'] text-[10px] text-[#55433D] uppercase tracking-widest">Project</span>
+<span class="font-['Space_Grotesk'] text-sm font-bold uppercase tracking-tight text-on-surface">ALPHA-1</span>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="bg-surface-container-low px-4 py-1.5 flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-[#D97757] animate-pulse"></span>
+<span class="font-['JetBrains_Mono'] text-sm font-medium tracking-tighter text-[#D97757]">00:04:12</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-[#55433D] hover:text-[#D97757] transition-colors Active: scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="pause">pause</span>
+</button>
+<button class="text-[#55433D] hover:text-[#D97757] transition-colors Active: scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</button>
+<button class="text-[#55433D] hover:text-[#D97757] transition-colors Active: scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Center Canvas -->
+<div class="flex-1 flex flex-col p-8 overflow-y-auto custom-scrollbar">
+<!-- Horizontal Stepper -->
+<div class="flex items-center justify-between mb-12 max-w-4xl mx-auto w-full relative">
+<!-- Connector Lines -->
+<div class="absolute top-1/2 left-0 w-full h-[1px] bg-outline-variant/20 -translate-y-1/2 z-0"></div>
+<div class="z-10 flex flex-col items-center gap-3 bg-surface px-4">
+<div class="w-8 h-8 rounded-none border border-[#D97757] bg-[#D97757]/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-[#D97757]" data-icon="check">check</span>
+</div>
+<span class="font-['JetBrains_Mono'] text-[10px] tracking-widest text-on-surface-variant">INITIALIZE</span>
+</div>
+<div class="z-10 flex flex-col items-center gap-3 bg-surface px-4">
+<div class="w-8 h-8 rounded-none border border-[#D97757] bg-[#D97757] flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-on-primary-container" data-icon="hardware" style="font-variation-settings: 'FILL' 1;">hardware</span>
+</div>
+<span class="font-['JetBrains_Mono'] text-[10px] tracking-widest text-[#D97757] font-bold">FORGE</span>
+</div>
+<div class="z-10 flex flex-col items-center gap-3 bg-surface px-4">
+<div class="w-8 h-8 rounded-none border border-outline-variant/30 bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-[#55433D]" data-icon="auto_fix_high">auto_fix_high</span>
+</div>
+<span class="font-['JetBrains_Mono'] text-[10px] tracking-widest text-[#55433D]">REFINE</span>
+</div>
+<div class="z-10 flex flex-col items-center gap-3 bg-surface px-4">
+<div class="w-8 h-8 rounded-none border border-outline-variant/30 bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-[#55433D]" data-icon="rocket_launch">rocket_launch</span>
+</div>
+<span class="font-['JetBrains_Mono'] text-[10px] tracking-widest text-[#55433D]">DEPLOY</span>
+</div>
+</div>
+<!-- Main Build Logs -->
+<div class="flex flex-col gap-4 max-w-4xl mx-auto w-full mb-12">
+<!-- Intervention Alert (Fixed/Priority) -->
+<div class="bg-[#2a1212]/30 border border-error/20 p-4 flex items-start gap-4 terminal-glow">
+<span class="material-symbols-outlined text-error" data-icon="report">report</span>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-1">
+<span class="font-['JetBrains_Mono'] text-[10px] tracking-widest text-error uppercase font-bold">Intervention Required</span>
+<span class="font-['JetBrains_Mono'] text-[10px] text-error/60">ERR_AUTH_042</span>
+</div>
+<p class="font-['JetBrains_Mono'] text-xs text-on-surface">MISSING CREDENTIALS: AWS_SECRET_ACCESS_KEY not found in environment forge. Please provide to continue Refinement phase.</p>
+<div class="mt-4 flex gap-4">
+<button class="bg-error/10 hover:bg-error/20 text-error px-4 py-2 font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase transition-colors">Resolve Now</button>
+<button class="text-on-surface-variant/60 hover:text-on-surface-variant px-4 py-2 font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase transition-colors">Ignore Task</button>
+</div>
+</div>
+</div>
+<!-- Active Task: Forging -->
+<div class="bg-surface-container border-l-2 border-[#D97757] p-6 relative overflow-hidden">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-3">
+<div class="bg-[#D97757]/10 p-2">
+<span class="material-symbols-outlined text-[#D97757]" data-icon="sync">sync</span>
+</div>
+<div>
+<h3 class="font-['Space_Grotesk'] font-bold text-on-surface uppercase tracking-tight">Forging Assets</h3>
+<p class="font-['JetBrains_Mono'] text-[10px] text-[#55433D]">ID: AF-7721 • Started 2m ago</p>
+</div>
+</div>
+<span class="font-['JetBrains_Mono'] text-xs text-[#D97757] font-bold">65%</span>
+</div>
+<div class="space-y-2 mb-6">
+<div class="flex items-center gap-3 text-xs font-['JetBrains_Mono'] text-on-surface-variant/80">
+<span class="text-[#D97757]">[INFO]</span>
+<span>Compiling production assets...</span>
+</div>
+<div class="flex items-center gap-3 text-xs font-['JetBrains_Mono'] text-on-surface-variant/80">
+<span class="text-[#D97757]">[INFO]</span>
+<span>Optimizing vector clusters for mascot-v2.svg</span>
+</div>
+<div class="flex items-center gap-3 text-xs font-['JetBrains_Mono'] text-on-surface-variant/80">
+<span class="text-tertiary">[DONE]</span>
+<span>Minification of core_engine.js complete</span>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-1 bg-surface-container-high relative">
+<div class="absolute top-0 left-0 h-full bg-[#D97757] shadow-[0_0_8px_rgba(217,119,87,0.4)]" style="width: 65%;"></div>
+</div>
+</div>
+<!-- Collapsed Task: Success -->
+<div class="bg-surface-container-low border border-outline-variant/10 p-4 flex items-center justify-between group hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="check_circle">check_circle</span>
+<span class="font-['JetBrains_Mono'] text-xs text-on-surface-variant">Unit tests passed (24/24)</span>
+</div>
+<span class="font-['JetBrains_Mono'] text-[10px] text-[#55433D]">0.8s ago</span>
+</div>
+<!-- Collapsed Task: Success -->
+<div class="bg-surface-container-low border border-outline-variant/10 p-4 flex items-center justify-between group hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="database">database</span>
+<span class="font-['JetBrains_Mono'] text-xs text-on-surface-variant">Database migration synced</span>
+</div>
+<span class="font-['JetBrains_Mono'] text-[10px] text-[#55433D]">4.2s ago</span>
+</div>
+</div>
+</div>
+<!-- Right Sidebar: Build Manifest -->
+<aside class="w-80 bg-surface-container-low border-l border-outline-variant/10 p-6 overflow-y-auto custom-scrollbar">
+<div class="mb-10">
+<h2 class="font-['Space_Grotesk'] text-[10px] font-black tracking-[0.2em] text-[#55433D] uppercase mb-6">Build Manifest</h2>
+<div class="space-y-6">
+<div>
+<span class="font-['JetBrains_Mono'] text-[10px] text-[#55433D] uppercase block mb-1">Commit Hash</span>
+<div class="bg-surface-container-lowest p-3 flex items-center justify-between">
+<span class="font-['JetBrains_Mono'] text-xs text-on-surface">4f2a9e1</span>
+<span class="material-symbols-outlined text-[16px] text-[#55433D]" data-icon="content_copy">content_copy</span>
+</div>
+</div>
+<div>
+<span class="font-['JetBrains_Mono'] text-[10px] text-[#55433D] uppercase block mb-1">Branch</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-[#D97757]" data-icon="account_tree">account_tree</span>
+<span class="font-['JetBrains_Mono'] text-xs text-on-surface">feat/mascot-stage-v2</span>
+</div>
+</div>
+<div>
+<span class="font-['JetBrains_Mono'] text-[10px] text-[#55433D] uppercase block mb-3">Updated Files</span>
+<div class="space-y-3">
+<div class="flex justify-between items-center group">
+<span class="font-['JetBrains_Mono'] text-[11px] text-on-surface-variant group-hover:text-on-surface transition-colors">forge_engine.clw</span>
+<div class="flex gap-2 font-['JetBrains_Mono'] text-[10px]">
+<span class="text-tertiary">+124</span>
+<span class="text-error">-12</span>
+</div>
+</div>
+<div class="flex justify-between items-center group">
+<span class="font-['JetBrains_Mono'] text-[11px] text-on-surface-variant group-hover:text-on-surface transition-colors">mascot_anim.json</span>
+<div class="flex gap-2 font-['JetBrains_Mono'] text-[10px]">
+<span class="text-tertiary">+482</span>
+<span class="text-error">-0</span>
+</div>
+</div>
+<div class="flex justify-between items-center group">
+<span class="font-['JetBrains_Mono'] text-[11px] text-on-surface-variant group-hover:text-on-surface transition-colors">global.css</span>
+<div class="flex gap-2 font-['JetBrains_Mono'] text-[10px]">
+<span class="text-tertiary">+14</span>
+<span class="text-error">-23</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="pt-8 border-t border-outline-variant/10">
+<h2 class="font-['Space_Grotesk'] text-[10px] font-black tracking-[0.2em] text-[#55433D] uppercase mb-6">Engine Load</h2>
+<div class="relative pt-1">
+<div class="flex mb-2 items-center justify-between">
+<div>
+<span class="text-[10px] font-['JetBrains_Mono'] font-semibold inline-block py-1 px-2 uppercase rounded-none text-[#D97757] bg-[#D97757]/10">
+                                    Forge Core 01
+                                </span>
+</div>
+<div class="text-right">
+<span class="text-[10px] font-['JetBrains_Mono'] font-semibold inline-block text-[#D97757]">
+                                    78.2 GHZ
+                                </span>
+</div>
+</div>
+<div class="overflow-hidden h-1 text-xs flex rounded-none bg-surface-container-highest">
+<div class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[#D97757]" style="width:78%"></div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+<!-- Mascot Stage (Bottom Strip) -->
+<footer class="fixed bottom-0 left-0 w-full z-50 flex items-center px-6 h-12 bg-[#0E0E0E] no-line border-t border-outline-variant/10">
+<div class="flex-1 flex items-center gap-4">
+<span class="font-['JetBrains_Mono'] text-[11px] text-[#D97757] font-bold tracking-widest uppercase">Mascot Stage</span>
+<div class="flex-1 h-[1px] bg-outline-variant/20 mx-4"></div>
+<div class="relative h-full flex items-end pb-2">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 group cursor-pointer">
+<span class="material-symbols-outlined text-[#D97757] text-lg" data-icon="pets">pets</span>
+<span class="font-['JetBrains_Mono'] text-[11px] text-[#D97757] font-medium">READY</span>
+</div>
+<div class="h-8 w-24 relative">
+<!-- Placeholder for Mascot Visualization -->
+<img alt="Lobster Mascot" class="h-10 w-10 object-contain absolute bottom-0 left-1/2 -translate-x-1/2" data-alt="A small red lobster mascot standing on a line" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyIHl-Yu-Uyrz4JTUGpvJ7iY3sQmeUPtwwmgeZYNk7AalyBQ7ya6U2-kPiM6DgH8SVpYNO233pNnqrCfVJYiZHPnt5TOuqvXKyF5ShEM1C_zpi7YM5XngZ5FTXpDPZXbD5up00oql_1ryJI0ea9lvDNbPDBBflWacgJ0Lobiw-9bofNmUJIptiy7bliooJ6IrkHqJPnDqOYO2iDnVNdwOqKC09XisAbFus0FhOX11LUqTh7_wHR6q85FM-JxeZESuhi-bcf5RZCNy8"/>
+</div>
+</div>
+</div>
+<div class="flex-1 h-[1px] bg-outline-variant/20 mx-4"></div>
+<div class="flex items-center gap-4">
+<span class="font-['JetBrains_Mono'] text-[10px] text-[#55433D]">v2.0.4-beta</span>
+</div>
+</div>
+</footer>
+</main>
+</body></html>

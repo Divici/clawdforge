@@ -8,7 +8,13 @@
       "Bash(node -e \"require\\(''''@testing-library/preact''''\\)\")",
       "Bash(mkdir -p test/components)",
       "Bash(mkdir -p src/components/shared)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(npx asar:*)",
+      "Bash(grep -E \"^\\\\\\\\\\(main|preload|launch|dist-renderer|src\\)\")",
+      "Bash(npx vite:*)",
+      "Bash(taskkill /f /im \"Claw''''d Forge.exe\")",
+      "Bash(taskkill /f /im electron.exe)",
+      "Bash(rm -rf 'c:/Users/doa92/Desktop/Gauntlet Projects/matrixForge/dist/win-unpacked')"
     ]
   }
 }
