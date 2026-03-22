@@ -24,9 +24,9 @@ test('subscribes to forge events on mount', () => {
   expect(window.forgeAPI.onForgeEvent).toHaveBeenCalled();
 });
 
-test('renders waiting indicator initially', () => {
+test('renders thinking indicator initially', () => {
   const { container } = render(<PresearchWizard />);
-  const waiting = container.querySelector('.presearch-wizard__waiting');
-  expect(waiting).toBeTruthy();
+  const thinking = container.querySelector('.presearch-wizard__thinking');
+  expect(thinking).toBeTruthy();
   expect(screen.getByText(/analyzing your project/)).toBeTruthy();
 });

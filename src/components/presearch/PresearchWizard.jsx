@@ -8,10 +8,11 @@ import { RegistryCard } from './RegistryCard';
 import './PresearchWizard.css';
 
 export function PresearchWizard() {
-  const [currentLoop, setCurrentLoop] = useState(1);
+  const [currentLoop, setCurrentLoop] = useState(0);
+  const [currentLoopName, setCurrentLoopName] = useState('');
   const [completedLoops, setCompletedLoops] = useState([]);
   const [cards, setCards] = useState([]);
-  const [waiting, setWaiting] = useState(true);
+  const [thinking, setThinking] = useState(true);
   const pendingQuestion = useRef(null);
   const pendingOptions = useRef([]);
 
@@ -21,6 +22,7 @@ export function PresearchWizard() {
     const handleEvent = (event) => {
       switch (event.type) {
         case 'forge:loop':
+          setThinking(true); // New loop = Claude is working, show indicator
           setCompletedLoops(prev => {
             const completed = [...prev];
             if (event.loop > 1 && !completed.includes(event.loop - 1)) {
@@ -29,6 +31,7 @@ export function PresearchWizard() {
             return completed;
           });
           setCurrentLoop(event.loop);
+          setCurrentLoopName(event.name || '');
           break;
 
         case 'forge:question':
@@ -57,7 +60,7 @@ export function PresearchWizard() {
 
         case 'forge:option-end':
           if (pendingQuestion.current) {
-            setWaiting(false);
+            setThinking(false);
             setCards(prev => [...prev, {
               type: 'question',
               id: pendingQuestion.current.id,
@@ -92,6 +95,7 @@ export function PresearchWizard() {
   }, []);
 
   const handleSelect = useCallback((id, option) => {
+    setThinking(true); // Claude will process the response
     if (window.forgeAPI) {
       if (option.recommended) {
         window.forgeAPI.sendForgeResponse('select-recommended', { name: option.name });
@@ -104,12 +108,14 @@ export function PresearchWizard() {
   }, []);
 
   const handleTextSubmit = useCallback((id, text) => {
+    setThinking(true);
     if (window.forgeAPI) {
       window.forgeAPI.sendForgeResponse('custom-text', { text });
     }
   }, []);
 
   const handleRegistryConfirm = useCallback(() => {
+    setThinking(true);
     if (window.forgeAPI) {
       window.forgeAPI.sendForgeResponse('confirm-registry', {});
     }
@@ -119,10 +125,14 @@ export function PresearchWizard() {
     <div className="presearch-wizard">
       <PresearchStepper currentLoop={currentLoop} completedLoops={completedLoops} />
       <div className="presearch-wizard__cards">
-        {waiting && cards.length === 0 && (
-          <div className="presearch-wizard__waiting">
+        {thinking && (
+          <div className="presearch-wizard__thinking">
             <div className="presearch-wizard__spinner">●</div>
-            <p className="presearch-wizard__waiting-text">Claw'd is analyzing your project...</p>
+            <p className="presearch-wizard__thinking-text">
+              {currentLoopName
+                ? `Claw'd is working on ${currentLoopName}...`
+                : "Claw'd is analyzing your project..."}
+            </p>
           </div>
         )}
         {cards.map((card, i) => {
