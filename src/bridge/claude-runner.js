@@ -1,25 +1,83 @@
 const pty = require('node-pty');
 const path = require('path');
+const fs = require('fs');
 
-// Short forge protocol preamble — sent before /workflow
-// Kept minimal so Claude processes it quickly
-const FORGE_PREAMBLE = [
-  'IMPORTANT: You are inside Claw\'d Forge dashboard. Emit [FORGE:] markers on their own line so the UI renders cards.',
-  'Format: [FORGE:TYPE key=value] content',
-  'Questions: [FORGE:QUESTION id=q1] text, then [FORGE:OPTION id=q1 recommended=true] Name | ✓ pro | ✗ con | Best when: x, then [FORGE:OPTION_END id=q1]',
-  'Text input: [FORGE:TEXT_QUESTION id=q1] text',
-  'Decisions: [FORGE:DECISION] summary',
-  'Registry: [FORGE:REGISTRY] [{json array}]',
-  'Loops: [FORGE:LOOP loop=1 name=Constraints]',
-  'Modes: [FORGE:MODE mode=presearch] or [FORGE:MODE mode=build]',
-  'Build: [FORGE:PHASE phase=name total=N current=M], [FORGE:TASK status=complete] msg, [FORGE:AGENT_SPAWN count=N], [FORGE:AGENT_DONE count=N], [FORGE:COMPLETE] {json}',
-  'Emit markers IN ADDITION to normal output. Without them the user sees nothing.',
-].join(' ');
+// Forge protocol instructions written as a rules file in the target project.
+// Claude CLI reads .claude/rules/*.md on startup — this persists through
+// all skill invocations including /workflow, /presearch, /build.
+const FORGE_PROTOCOL_RULES = `# Forge Output Protocol
+
+You are running inside Claw'd Forge, a visual dashboard app. You MUST emit structured markers so the dashboard can render UI cards. Without these markers, the user sees a blank screen.
+
+## Marker Format
+
+Each marker goes on its own line: \`[FORGE:TYPE key=value] content\`
+
+## When Presenting a Decision with Options
+
+\`\`\`
+[FORGE:QUESTION id=q1] What database should we use?
+[FORGE:OPTION id=q1 recommended=true] SQLite | ✓ Zero config, embedded | ✓ Perfect for single-user | ✗ No concurrent writes | Best when: single user, local-first
+[FORGE:OPTION id=q1] PostgreSQL | ✓ Mature, relational | ✗ Requires server setup | Best when: complex queries
+[FORGE:OPTION_END id=q1]
+\`\`\`
+
+Increment question ids: q1, q2, q3. Set \`recommended=true\` on your pick. Separate name, pros (✓), cons (✗), "Best when:" with \`|\`.
+
+## When Asking an Open-Ended Question
+
+\`\`\`
+[FORGE:TEXT_QUESTION id=q1] What is your timeline?
+\`\`\`
+
+## When Locking a Decision
+
+\`\`\`
+[FORGE:DECISION] Database: SQLite — embedded, zero config
+\`\`\`
+
+## Requirements Registry
+
+\`\`\`
+[FORGE:REGISTRY] [{"id":"R-001","text":"Shorten a URL","priority":"Must-have"},{"id":"R-002","text":"Redirect","priority":"Must-have"}]
+\`\`\`
+
+## Loop and Mode Transitions
+
+\`\`\`
+[FORGE:LOOP loop=1 name=Constraints]
+[FORGE:MODE mode=presearch]
+[FORGE:MODE mode=build]
+\`\`\`
+
+## During Build
+
+\`\`\`
+[FORGE:PHASE phase=scaffold total=5 current=1]
+[FORGE:TASK status=complete] feat(db): add user model
+[FORGE:AGENT_SPAWN count=3]
+[FORGE:AGENT_DONE count=2]
+[FORGE:BLOCKER type=api-key] Need OpenAI API key
+[FORGE:COMPLETE] {"tests":127,"phases":5}
+\`\`\`
+
+## Rules
+
+- Emit markers IN ADDITION to your normal output, not instead of it
+- Each marker MUST be on its own line
+- ALWAYS emit OPTION_END after listing all options
+- For REGISTRY, content is a JSON array
+- Emit LOOP at each presearch loop transition
+- Emit MODE when switching between presearch and build
+`;
+
+const RULES_FILENAME = 'forge-protocol.md';
 
 class ClaudeRunner {
   constructor(bus) {
     this.bus = bus;
     this.ptyProcess = null;
+    this._rulesPath = null;
   }
 
   _buildEnv() {
@@ -30,9 +88,42 @@ class ClaudeRunner {
     };
   }
 
+  /**
+   * Write the forge protocol rules file into the target project's .claude/rules/ dir.
+   * Claude CLI reads these automatically on startup.
+   */
+  _installForgeRules(projectDir) {
+    const rulesDir = path.join(projectDir, '.claude', 'rules');
+    try {
+      fs.mkdirSync(rulesDir, { recursive: true });
+      this._rulesPath = path.join(rulesDir, RULES_FILENAME);
+      fs.writeFileSync(this._rulesPath, FORGE_PROTOCOL_RULES, 'utf-8');
+    } catch (err) {
+      console.error('Failed to write forge rules:', err.message);
+      this._rulesPath = null;
+    }
+  }
+
+  /**
+   * Remove the forge protocol rules file after Claude exits.
+   */
+  _removeForgeRules() {
+    if (this._rulesPath) {
+      try {
+        fs.unlinkSync(this._rulesPath);
+      } catch {
+        // Ignore — file may already be gone
+      }
+      this._rulesPath = null;
+    }
+  }
+
   spawn(config, onData) {
     const { projectDir, prompt, prdFile } = config;
     const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/bash';
+
+    // Install forge protocol rules in the target project
+    this._installForgeRules(projectDir);
 
     this.ptyProcess = pty.spawn(shell, [], {
       name: 'xterm-256color',
@@ -42,13 +133,13 @@ class ClaudeRunner {
       env: this._buildEnv(),
     });
 
-    let step = 0; // 0=waiting for shell, 1=claude sent, 2=preamble sent, 3=workflow sent
+    let step = 0; // 0=waiting for shell, 1=claude sent, 2=workflow sent
     let buffer = '';
 
     this.ptyProcess.onData((data) => {
       if (onData) onData(data);
 
-      if (step >= 3) return; // All commands sent
+      if (step >= 2) return;
       buffer += data;
 
       // Step 0 -> 1: Send claude command once shell prompt appears
@@ -59,26 +150,20 @@ class ClaudeRunner {
         }, 500);
       }
 
-      // Step 1 -> 2: Wait for Claude CLI ready, send short preamble
+      // Step 1 -> 2: Wait for Claude CLI ready, then send /workflow
       if (step === 1 && buffer.length > 500) {
-        // Look for Claude CLI ready signals
         const stripped = buffer.replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '');
         if (stripped.includes('Tips') || stripped.includes('Claude Code') || stripped.includes('claude-code') || stripped.includes('\n> ')) {
           step = 2;
           setTimeout(() => {
-            this.ptyProcess.write(FORGE_PREAMBLE + '\r');
-          }, 1500);
-
-          // Step 2 -> 3: Send /workflow after preamble is processed
-          setTimeout(() => {
-            step = 3;
             this.ptyProcess.write('/workflow\r');
-          }, 4000);
+          }, 1500);
         }
       }
     });
 
     this.ptyProcess.onExit(({ exitCode, signal }) => {
+      this._removeForgeRules();
       this.bus.emit('claude:exit', { code: exitCode, signal });
     });
 
@@ -99,6 +184,7 @@ class ClaudeRunner {
 
   kill() {
     if (this.ptyProcess) {
+      this._removeForgeRules();
       this.ptyProcess.kill();
       this.ptyProcess = null;
     }
