@@ -25,10 +25,10 @@ test('renders phase stepper', () => {
   expect(container.querySelector('.phase-stepper')).toBeTruthy();
 });
 
-test('renders card log with waiting message', () => {
+test('renders build log panel', () => {
   const { container } = render(<BuildDashboard />);
-  expect(container.querySelector('.card-log')).toBeTruthy();
-  expect(container.querySelector('.build-dashboard__waiting')).toBeTruthy();
+  expect(container.querySelector('.build-log')).toBeTruthy();
+  expect(container.querySelector('.build-log__header')).toBeTruthy();
 });
 
 test('handles forge:phase event to set phases', () => {
