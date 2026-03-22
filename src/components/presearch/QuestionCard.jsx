@@ -35,30 +35,36 @@ export function QuestionCard({ id, question, options, onSelect }) {
                   {opt.bestWhen && (
                     <p className="question-card__option-desc">Best when: {opt.bestWhen}</p>
                   )}
-                  <div className="question-card__pro-con-grid">
-                    <div className="question-card__pro-col">
-                      <h4 className="question-card__pro-con-heading">Pros</h4>
-                      <ul className="question-card__pro-con-list">
-                        {opt.pros && opt.pros.map((p, j) => (
-                          <li key={j} className="question-card__pro-item">
-                            <span className="question-card__icon-pro">{'\u2295'}</span>
-                            <span>{p}</span>
-                          </li>
-                        ))}
-                      </ul>
+                  {(opt.pros?.length > 0 || opt.cons?.length > 0) && (
+                    <div className="question-card__pro-con-grid">
+                      {opt.pros?.length > 0 && (
+                        <div className="question-card__pro-col">
+                          <h4 className="question-card__pro-con-heading">Pros</h4>
+                          <ul className="question-card__pro-con-list">
+                            {opt.pros.map((p, j) => (
+                              <li key={j} className="question-card__pro-item">
+                                <span className="question-card__icon-pro">{'\u2295'}</span>
+                                <span>{p}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {opt.cons?.length > 0 && (
+                        <div className="question-card__con-col">
+                          <h4 className="question-card__pro-con-heading">Cons</h4>
+                          <ul className="question-card__pro-con-list">
+                            {opt.cons.map((c, j) => (
+                              <li key={j} className="question-card__con-item">
+                                <span className="question-card__icon-con">{'\u2296'}</span>
+                                <span>{c}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
-                    <div className="question-card__con-col">
-                      <h4 className="question-card__pro-con-heading">Cons</h4>
-                      <ul className="question-card__pro-con-list">
-                        {opt.cons && opt.cons.map((c, j) => (
-                          <li key={j} className="question-card__con-item">
-                            <span className="question-card__icon-con">{'\u2296'}</span>
-                            <span>{c}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
+                  )}
                   <button
                     className="question-card__select-btn"
                     onClick={(e) => { e.stopPropagation(); handleSelect(opt); }}
