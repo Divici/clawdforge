@@ -7,14 +7,20 @@ const os = require('os');
 // Claude CLI reads .claude/rules/*.md on startup — this persists through
 // all skill invocations including /workflow, /presearch, /build.
 const FORGE_PROTOCOL_RULES = `Emit [FORGE:TYPE key=value] markers on their own line, in addition to normal output.
-[FORGE:QUESTION id=q1] What database?
-[FORGE:OPTION id=q1 recommended=true] SQLite | ✓ Zero config | ✗ No concurrent writes | Best when: local
-[FORGE:OPTION id=q1] PostgreSQL | ✓ Mature | ✗ Needs server | Best when: complex queries
+ALWAYS prefer QUESTION with multiple OPTIONs over TEXT_QUESTION. Only use TEXT_QUESTION when there are truly no predefined choices (e.g. project name, timeline, custom input).
+[FORGE:QUESTION id=q1] What database should we use?
+[FORGE:OPTION id=q1 recommended=true] SQLite | ✓ Zero config | ✓ Embedded | ✗ No concurrent writes | Best when: local-first
+[FORGE:OPTION id=q1] PostgreSQL | ✓ Mature | ✓ Complex queries | ✗ Needs server | Best when: multi-user
+[FORGE:OPTION id=q1] MongoDB | ✓ Flexible schema | ✗ No joins | Best when: document data
 [FORGE:OPTION_END id=q1]
-[FORGE:TEXT_QUESTION id=q2] What is your timeline?
+[FORGE:QUESTION id=q2] What CSS approach?
+[FORGE:OPTION id=q2 recommended=true] Tailwind | ✓ Utility-first | ✗ Verbose HTML | Best when: rapid prototyping
+[FORGE:OPTION id=q2] CSS Modules | ✓ Scoped | ✗ More files | Best when: component libraries
+[FORGE:OPTION_END id=q2]
 [FORGE:DECISION] Database: SQLite
-[FORGE:REGISTRY] [{"id":"R-001","text":"desc","priority":"Must-have"}]
+[FORGE:TEXT_QUESTION id=q3] What is your project name?
 [FORGE:LOOP loop=1 name=Constraints]
+[FORGE:REGISTRY] [{"id":"R-001","text":"desc","priority":"Must-have"}]
 [FORGE:MODE mode=build]
 [FORGE:PHASE phase=scaffold total=5 current=1]
 [FORGE:TASK status=complete] commit message
