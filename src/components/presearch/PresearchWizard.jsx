@@ -41,6 +41,8 @@ export function PresearchWizard() {
           });
           setCurrentLoop(loopNum);
           setCurrentLoopName(event.name || '');
+          // Clear previous loop's cards so the UI resets for the new phase
+          setCards([]);
           addDiagnostic('sys', `Entering loop: ${event.name || `Loop ${loopNum}`}`);
           break;
         }
