@@ -1,18 +1,19 @@
 # Active Context — Claw'd Forge v2
 
 ## Current Phase
-Polish — wiring, integration, and packaging finalization
+Build complete — all 8 phases finished
 
-## Just Completed
-- Wired forge events to Claw'd stage costumes and helpers in App.jsx
-- Created useForgeEvents and useForgeAPI hooks
-- Created ProConList shared component
-- Finalized electron-builder.yml with correct branding and file includes
-- App.jsx mode switching handles full lifecycle (launch -> presearch -> build -> complete)
-- All 284 tests pass, lint clean (0 errors)
+## Summary
+- 284 tests passing across 35 test files
+- 0 lint errors
+- All 32 requirements addressed (29 must-have, 3 should-have)
+- 22 Preact components, 5 bridge modules, 3 canvas modules, 3 hooks
+- Forge Output Protocol added to presearch/build/workflow skill files
+- Placeholder sprites in place (real sprites need AI generation)
 
-## Next Steps
-1. Add sprite assets for Claw'd costumes
-2. Test end-to-end with real forge process
-3. Resize handling polish
-4. Production build and packaging test
+## What's Left (stretch / v3)
+- Replace placeholder sprites with AI-generated Claw'd costume sprite sheets
+- Add responsive canvas resize handling
+- Refine palette via Stitch design system generation
+- Add debug terminal drawer (hidden, keyboard shortcut)
+- End-to-end test with live Claude CLI
