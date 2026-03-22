@@ -8,7 +8,7 @@ test('renders question text', () => {
 
 test('submit button disabled when empty', () => {
   render(<TextCard id="q1" question="What timeline?" onSubmit={() => {}} />);
-  expect(screen.getByText('Submit').disabled).toBe(true);
+  expect(screen.getByText('Submit Response').disabled).toBe(true);
 });
 
 test('calls onSubmit with text', () => {
@@ -16,7 +16,7 @@ test('calls onSubmit with text', () => {
   render(<TextCard id="q1" question="What timeline?" onSubmit={onSubmit} />);
   const textarea = screen.getByPlaceholderText('Type your answer...');
   fireEvent.input(textarea, { target: { value: '2 weeks' } });
-  fireEvent.click(screen.getByText('Submit'));
+  fireEvent.click(screen.getByText('Submit Response'));
   expect(onSubmit).toHaveBeenCalledWith('q1', '2 weeks');
 });
 
@@ -25,7 +25,7 @@ test('trims whitespace before submitting', () => {
   render(<TextCard id="q1" question="What timeline?" onSubmit={onSubmit} />);
   const textarea = screen.getByPlaceholderText('Type your answer...');
   fireEvent.input(textarea, { target: { value: '  spaced  ' } });
-  fireEvent.click(screen.getByText('Submit'));
+  fireEvent.click(screen.getByText('Submit Response'));
   expect(onSubmit).toHaveBeenCalledWith('q1', 'spaced');
 });
 
@@ -33,5 +33,5 @@ test('submit button remains disabled for whitespace-only input', () => {
   render(<TextCard id="q1" question="What timeline?" onSubmit={() => {}} />);
   const textarea = screen.getByPlaceholderText('Type your answer...');
   fireEvent.input(textarea, { target: { value: '   ' } });
-  expect(screen.getByText('Submit').disabled).toBe(true);
+  expect(screen.getByText('Submit Response').disabled).toBe(true);
 });

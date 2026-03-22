@@ -28,5 +28,12 @@ test('renders thinking indicator initially', () => {
   const { container } = render(<PresearchWizard />);
   const thinking = container.querySelector('.presearch-wizard__thinking');
   expect(thinking).toBeTruthy();
-  expect(screen.getByText(/analyzing your project/)).toBeTruthy();
+  expect(screen.getByText(/Analyzing your project/i)).toBeTruthy();
+});
+
+test('renders two-column layout', () => {
+  const { container } = render(<PresearchWizard />);
+  expect(container.querySelector('.presearch-wizard__content')).toBeTruthy();
+  expect(container.querySelector('.presearch-wizard__left')).toBeTruthy();
+  expect(container.querySelector('.presearch-wizard__right')).toBeTruthy();
 });
