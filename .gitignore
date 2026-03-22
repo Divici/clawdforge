@@ -4,3 +4,5 @@ out/
 STUDY_GUIDE.md
 WORKFLOW_STATE.md
 forge-log.json
+.claude/worktrees/
+dist-renderer/
