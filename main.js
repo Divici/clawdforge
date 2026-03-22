@@ -112,9 +112,8 @@ ipcMain.on('claude:spawn', (_event, config) => {
     runner.kill();
   }
   runner = new ClaudeRunner(bus);
-  parser.setProjectDir(projectDir); // For Haiku extraction calls
   runner.spawn({ projectDir, prompt, prdFile }, (data) => {
-    // Feed to stage parser — tries markers first, then Haiku extraction
+    // Feed to stage parser — markers are extracted and emitted as events
     parser.feed(data);
   });
 
