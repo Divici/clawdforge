@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { PhaseStepper } from './PhaseStepper';
 import { CardLog } from './CardLog';
 import { TaskCard } from './TaskCard';
@@ -7,6 +7,23 @@ import { ContextCard } from './ContextCard';
 import { PauseScreen } from './PauseScreen';
 import { CompletionScreen } from './CompletionScreen';
 import './BuildDashboard.css';
+
+function stripAnsi(text) {
+  return text
+    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+    .replace(/\x1b\][^\x07]*\x07/g, '')
+    .replace(/\x1b\[\?[0-9;]*[a-zA-Z]/g, '')
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
+}
+
+function isNoiseLine(line) {
+  const trimmed = line.trim();
+  if (!trimmed) return true;
+  if (trimmed.length <= 2) return true;
+  if (/^[✻✶✢✽·*●⠂⠐⏵⏸⎿]+$/.test(trimmed)) return true;
+  if (trimmed === '>') return true;
+  return false;
+}
 
 export function BuildDashboard({ onComplete }) {
   const [phases, setPhases] = useState([]);
@@ -17,6 +34,10 @@ export function BuildDashboard({ onComplete }) {
   const [paused, setPaused] = useState(false);
   const [complete, setComplete] = useState(false);
   const [summary, setSummary] = useState(null);
+  const [outputLines, setOutputLines] = useState([]);
+  const [hasStructuredCards, setHasStructuredCards] = useState(false);
+  const outputRef = useRef(null);
+  const rawBuffer = useRef('');
 
   useEffect(() => {
     if (!window.forgeAPI) return;
@@ -24,6 +45,7 @@ export function BuildDashboard({ onComplete }) {
     const handleEvent = (event) => {
       switch (event.type) {
         case 'forge:phase':
+          setHasStructuredCards(true);
           if (event.phase) {
             setCurrentPhase((prev) => {
               if (prev && prev !== event.phase) {
@@ -36,6 +58,7 @@ export function BuildDashboard({ onComplete }) {
           break;
 
         case 'forge:task':
+          setHasStructuredCards(true);
           setCards((prev) => [...prev, {
             type: 'task',
             title: event.content || event.status,
@@ -58,6 +81,7 @@ export function BuildDashboard({ onComplete }) {
           break;
 
         case 'forge:blocker':
+          setHasStructuredCards(true);
           setCards((prev) => [...prev, {
             type: 'blocker',
             title: `Blocker: ${event.content || event.type}`,
@@ -82,7 +106,28 @@ export function BuildDashboard({ onComplete }) {
     };
 
     window.forgeAPI.onForgeEvent(handleEvent);
+
+    // Raw output fallback
+    if (window.forgeAPI.onRawOutput) {
+      window.forgeAPI.onRawOutput((text) => {
+        rawBuffer.current += text;
+        const cleaned = stripAnsi(rawBuffer.current);
+        const lines = cleaned.split('\n');
+        rawBuffer.current = lines.pop() || '';
+        const meaningful = lines.map(l => l.trimEnd()).filter(l => !isNoiseLine(l));
+        if (meaningful.length > 0) {
+          setOutputLines(prev => [...prev, ...meaningful].slice(-200));
+        }
+      });
+    }
   }, [currentPhase, onComplete]);
+
+  // Auto-scroll raw output
+  useEffect(() => {
+    if (outputRef.current) {
+      outputRef.current.scrollTop = outputRef.current.scrollHeight;
+    }
+  }, [outputLines]);
 
   const handleResume = useCallback((instructions) => {
     setPaused(false);
@@ -105,26 +150,39 @@ export function BuildDashboard({ onComplete }) {
 
   return (
     <div className="build-dashboard">
-      <PhaseStepper
-        phases={phases}
-        currentPhase={currentPhase}
-        completedPhases={completedPhases}
-        stats={stats}
-      />
-      <CardLog>
-        {cards.map((card, i) => {
-          switch (card.type) {
-            case 'task':
-              return <TaskCard key={i} {...card} expanded={i === cards.length - 1} />;
-            case 'blocker':
-              return <BlockerCard key={i} title={card.title} description={card.description} onSkipMock={handleSkipMock} />;
-            case 'context':
-              return <ContextCard key={i} phase={card.phase} taskProgress={`${card.pct}% context used`} onResume={() => handleResume('')} />;
-            default:
-              return null;
-          }
-        })}
-      </CardLog>
+      {(hasStructuredCards && phases.length > 0) && (
+        <PhaseStepper
+          phases={phases}
+          currentPhase={currentPhase}
+          completedPhases={completedPhases}
+          stats={stats}
+        />
+      )}
+      {hasStructuredCards ? (
+        <CardLog>
+          {cards.map((card, i) => {
+            switch (card.type) {
+              case 'task':
+                return <TaskCard key={i} {...card} expanded={i === cards.length - 1} />;
+              case 'blocker':
+                return <BlockerCard key={i} title={card.title} description={card.description} onSkipMock={handleSkipMock} />;
+              case 'context':
+                return <ContextCard key={i} phase={card.phase} taskProgress={`${card.pct}% context used`} onResume={() => handleResume('')} />;
+              default:
+                return null;
+            }
+          })}
+        </CardLog>
+      ) : (
+        <div className="build-dashboard__raw-output" ref={outputRef}>
+          {outputLines.map((line, i) => (
+            <div key={i} className="build-dashboard__raw-line">{line}</div>
+          ))}
+          {outputLines.length === 0 && (
+            <div className="build-dashboard__waiting">Building autonomously...</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

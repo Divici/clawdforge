@@ -3,4 +3,31 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  padding: 16px;
+  gap: 16px;
+}
+
+.build-dashboard__raw-output {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-tan-dim);
+  border-radius: 8px;
+  padding: 16px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-cream);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.build-dashboard__raw-line {
+  padding: 1px 0;
+}
+
+.build-dashboard__waiting {
+  color: var(--color-tan);
+  text-align: center;
+  padding: 32px;
 }
