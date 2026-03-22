@@ -2,9 +2,9 @@
   display: flex;
   flex-direction: column;
   padding: 24px;
-  height: 100%;
   max-width: 1152px;
   margin: 0 auto;
+  width: 100%;
 }
 
 /* Two-column layout: 8/4 grid ratio */
@@ -13,24 +13,20 @@
   grid-template-columns: 2fr 1fr;
   gap: 32px;
   align-items: start;
-  flex: 1;
-  overflow: hidden;
 }
 
 .presearch-wizard__left {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  overflow-y: auto;
-  min-height: 0;
 }
 
 .presearch-wizard__right {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  overflow-y: auto;
-  min-height: 0;
+  position: sticky;
+  top: 24px;
 }
 
 /* AI Thinking status bar — Stitch style */

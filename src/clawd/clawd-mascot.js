@@ -1,18 +1,18 @@
 export const COSTUMES = {
-  idle:       { label: 'Idle',       color: '#E07A4B' },
-  detective:  { label: 'Detective',  color: '#D4A574' },
-  architect:  { label: 'Architect',  color: '#8B7355' },
-  scientist:  { label: 'Scientist',  color: '#5BAE6B' },
+  idle:       { label: 'Idle',       color: '#D97757' },
+  detective:  { label: 'Detective',  color: '#DBC1B9' },
+  architect:  { label: 'Architect',  color: '#55433D' },
+  scientist:  { label: 'Scientist',  color: '#5EDAC7' },
   planner:    { label: 'Planner',    color: '#E8B84B' },
-  critic:     { label: 'Critic',     color: '#E85555' },
-  builder:    { label: 'Builder',    color: '#B85E3A' },
-  coach:      { label: 'Coach',      color: '#D4A574' },
-  foreman:    { label: 'Foreman',    color: '#E07A4B' },
-  inspector:  { label: 'Inspector',  color: '#8B7355' },
+  critic:     { label: 'Critic',     color: '#FFB4AB' },
+  builder:    { label: 'Builder',    color: '#D97757' },
+  coach:      { label: 'Coach',      color: '#DBC1B9' },
+  foreman:    { label: 'Foreman',    color: '#D97757' },
+  inspector:  { label: 'Inspector',  color: '#55433D' },
   rocket:     { label: 'Rocket',     color: '#E8B84B' },
-  party:      { label: 'Party',      color: '#5BAE6B' },
-  error:      { label: 'Error',      color: '#E85555' },
-  coffee:     { label: 'Coffee',     color: '#D4A574' },
+  party:      { label: 'Party',      color: '#5EDAC7' },
+  error:      { label: 'Error',      color: '#FFB4AB' },
+  coffee:     { label: 'Coffee',     color: '#DBC1B9' },
 };
 
 export const EVENT_COSTUME_MAP = {
@@ -32,6 +32,19 @@ export const EVENT_COSTUME_MAP = {
   'paused': 'coffee',
 };
 
+// Load clawSprite.png as the mascot image
+let spriteImage = null;
+let spriteLoaded = false;
+
+export function loadSprite() {
+  if (spriteImage) return;
+  spriteImage = new Image();
+  spriteImage.onload = () => { spriteLoaded = true; };
+  spriteImage.onerror = () => { spriteLoaded = false; };
+  // Vite resolves this import path at build time
+  spriteImage.src = new URL('../assets/sprites/clawSprite.png', import.meta.url).href;
+}
+
 export class ClawdMascot {
   constructor() {
     this.x = 0;
@@ -43,6 +56,7 @@ export class ClawdMascot {
     this.frameCount = 0;
     this.opacity = 1;
     this.transitioning = false;
+    loadSprite();
   }
 
   setCostume(costumeName) {
@@ -65,16 +79,28 @@ export class ClawdMascot {
   }
 
   draw(ctx) {
-    const costume = COSTUMES[this.costume];
     const bobOffset = Math.sin(this.frameCount * 0.05) * 3;
 
-    ctx.fillStyle = costume.color;
-    ctx.fillRect(this.x, this.y + bobOffset, this.width, this.height);
+    if (spriteLoaded && spriteImage) {
+      // Draw the sprite image
+      ctx.drawImage(
+        spriteImage,
+        this.x, this.y + bobOffset,
+        this.width, this.height
+      );
+    } else {
+      // Fallback: colored rectangle with label (until sprite loads)
+      const costume = COSTUMES[this.costume];
+      ctx.fillStyle = costume.color;
+      ctx.globalAlpha = 0.6;
+      ctx.fillRect(this.x, this.y + bobOffset, this.width, this.height);
+      ctx.globalAlpha = 1;
 
-    ctx.fillStyle = '#1A1A2E';
-    ctx.font = '8px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(costume.label, this.x + this.width / 2, this.y + bobOffset + this.height / 2);
+      ctx.fillStyle = '#E5E2E1';
+      ctx.font = '8px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(costume.label, this.x + this.width / 2, this.y + bobOffset + this.height / 2);
+    }
   }
 }

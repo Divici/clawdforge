@@ -66,12 +66,12 @@ function startLoop(canvas) {
 
     const { width, height } = canvas;
 
-    // Clear
-    ctx.fillStyle = '#252540';
+    // Clear — Stitch surface-lowest
+    ctx.fillStyle = '#0E0E0E';
     ctx.fillRect(0, 0, width, height);
 
-    // Ground line
-    ctx.strokeStyle = '#8B7355';
+    // Ground line — Stitch outline-variant
+    ctx.strokeStyle = '#55433D';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, height * 0.8);

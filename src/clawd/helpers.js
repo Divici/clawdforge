@@ -60,14 +60,16 @@ export class HelperManager {
     for (const h of this.helpers) {
       const bob = Math.sin(frameCount * 0.08 + h.bobOffset) * 2;
 
-      ctx.fillStyle = h.state === 'leaving' ? '#8B7355' : '#E07A4B';
+      ctx.fillStyle = h.state === 'leaving' ? '#55433D' : '#D97757';
+      ctx.globalAlpha = h.state === 'leaving' ? 0.4 : 0.7;
       ctx.fillRect(h.x, h.y + bob, h.width, h.height);
+      ctx.globalAlpha = 1;
 
-      ctx.fillStyle = '#1A1A2E';
+      ctx.fillStyle = '#E5E2E1';
       ctx.font = '6px monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('helper', h.x + h.width / 2, h.y + bob + h.height / 2);
+      ctx.fillText('agent', h.x + h.width / 2, h.y + bob + h.height / 2);
     }
   }
 }
