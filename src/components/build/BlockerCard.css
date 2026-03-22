@@ -1,0 +1,64 @@
+.blocker-card {
+  border-left: 3px solid var(--color-warning);
+}
+
+.blocker-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.blocker-card__icon {
+  font-size: 16px;
+  color: var(--color-warning);
+}
+
+.blocker-card__title {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-cream);
+  font-weight: bold;
+}
+
+.blocker-card__desc {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-tan);
+  margin: 8px 0;
+}
+
+.blocker-card__tried {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-tan);
+  cursor: pointer;
+  margin: 8px 0;
+}
+
+.blocker-card__tried p {
+  margin: 4px 0 4px 16px;
+  color: var(--color-tan-dim);
+}
+
+.blocker-card__input {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.blocker-card__input input {
+  flex: 1;
+  padding: 6px 10px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-tan-dim);
+  border-radius: 4px;
+  color: var(--color-cream);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.blocker-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}

@@ -1,0 +1,54 @@
+.failure-card {
+  border-left: 3px solid var(--color-error);
+}
+
+.failure-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.failure-card__icon {
+  font-size: 16px;
+  color: var(--color-error);
+  font-weight: bold;
+}
+
+.failure-card__title {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-cream);
+  font-weight: bold;
+}
+
+.failure-card__desc {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-tan);
+  margin: 8px 0;
+}
+
+.failure-card__error {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-tan);
+  cursor: pointer;
+  margin: 8px 0;
+}
+
+.failure-card__error-text {
+  margin: 8px 0;
+  padding: 8px;
+  background: var(--color-bg);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--color-error);
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.failure-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
