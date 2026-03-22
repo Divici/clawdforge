@@ -1,0 +1,27 @@
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('../assets/fonts/PressStart2P.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Palette */
+  --color-bg: #1A1A2E;
+  --color-surface: #252540;
+  --color-surface-hover: #2E2E4A;
+  --color-primary: #E07A4B;
+  --color-primary-dim: #B85E3A;
+  --color-cream: #F5E6D3;
+  --color-tan: #D4A574;
+  --color-tan-dim: #8B7355;
+  --color-success: #5BAE6B;
+  --color-error: #E85555;
+  --color-warning: #E8B84B;
+
+  /* Typography */
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: system-ui, -apple-system, sans-serif;
+}
