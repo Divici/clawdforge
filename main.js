@@ -115,6 +115,10 @@ ipcMain.on('claude:spawn', (_event, config) => {
   runner.spawn({ projectDir, prompt, prdFile }, (data) => {
     // Feed to stage parser — markers are extracted and emitted as events
     parser.feed(data);
+    // Forward raw output for build log display
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('forge:raw-output', data);
+    }
   });
 
   // Initialize forge log
