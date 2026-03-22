@@ -16,4 +16,10 @@ contextBridge.exposeInMainWorld('forgeAPI', {
 
   // Forge events (parsed stage events)
   onForgeEvent: (callback) => ipcRenderer.on('forge:event', (_event, data) => callback(data)),
+
+  // Forge response (dashboard -> Claude stdin)
+  sendForgeResponse: (action, payload) => ipcRenderer.send('forge:respond', { action, payload }),
+
+  // Load forge log for resume
+  loadForgeLog: (projectDir) => ipcRenderer.invoke('forge:load-log', projectDir),
 });
