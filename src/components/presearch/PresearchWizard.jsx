@@ -165,12 +165,45 @@ export function PresearchWizard() {
         {/* Left column: AI status + cards */}
         <div className="presearch-wizard__left">
           {thinking && (
-            <div className="presearch-wizard__thinking">
-              <span className="presearch-wizard__thinking-text">
-                {currentLoopName
-                  ? `AI Thinking: Working on ${currentLoopName}`
-                  : 'AI Thinking: Analyzing your project'}
-              </span>
+            <div className="presearch-wizard__thinking-block">
+              <div className="presearch-wizard__thinking">
+                <span className="presearch-wizard__thinking-text">
+                  {currentLoopName
+                    ? `AI Thinking: Working on ${currentLoopName}`
+                    : 'AI Thinking: Analyzing your project'}
+                </span>
+              </div>
+              {cards.length === 0 && (
+                <div className="skeleton-tree">
+                  <div className="skeleton-tree__header">
+                    <span className="skeleton-tree__icon" />
+                    <span className="skeleton-tree__bar skeleton-tree__bar--wide" />
+                  </div>
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <div key={n} className="skeleton-tree__row" style={{ animationDelay: `${n * 0.15}s` }}>
+                      <span className="skeleton-tree__indent" />
+                      <span className="skeleton-tree__icon skeleton-tree__icon--sm" />
+                      <span className={`skeleton-tree__bar skeleton-tree__bar--${n % 3 === 0 ? 'short' : n % 2 === 0 ? 'wide' : 'med'}`} />
+                    </div>
+                  ))}
+                  <div className="skeleton-tree__row" style={{ animationDelay: '0.9s' }}>
+                    <span className="skeleton-tree__indent" />
+                    <span className="skeleton-tree__icon skeleton-tree__icon--sm" />
+                    <span className="skeleton-tree__bar skeleton-tree__bar--med" />
+                  </div>
+                  <div className="skeleton-tree__header" style={{ animationDelay: '1.05s' }}>
+                    <span className="skeleton-tree__icon" />
+                    <span className="skeleton-tree__bar skeleton-tree__bar--med" />
+                  </div>
+                  {[1, 2, 3].map(n => (
+                    <div key={`b${n}`} className="skeleton-tree__row" style={{ animationDelay: `${1.2 + n * 0.15}s` }}>
+                      <span className="skeleton-tree__indent" />
+                      <span className="skeleton-tree__icon skeleton-tree__icon--sm" />
+                      <span className={`skeleton-tree__bar skeleton-tree__bar--${n === 2 ? 'wide' : 'short'}`} />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

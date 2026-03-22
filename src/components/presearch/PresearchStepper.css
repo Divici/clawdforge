@@ -1,5 +1,11 @@
 .presearch-stepper {
   margin-bottom: 24px;
+  position: sticky;
+  top: 48px; /* Below the header bar */
+  z-index: 30;
+  background: var(--color-bg);
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 
 .presearch-stepper__header {
