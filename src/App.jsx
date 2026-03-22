@@ -1,10 +1,51 @@
+import { useState, useCallback } from 'preact/hooks';
+import { HeaderBar } from './components/HeaderBar';
+import { LaunchScreen } from './components/LaunchScreen';
 import { ClawdStage } from './clawd/ClawdStage';
+import { useElapsedTimer } from './hooks/useElapsedTimer';
 
 export function App() {
+  const [mode, setMode] = useState('launch'); // 'launch' | 'presearch' | 'build' | 'complete'
+  const [projectName, setProjectName] = useState('');
+  const [running, setRunning] = useState(false);
+  const elapsed = useElapsedTimer(running);
+
+  const handleLaunch = useCallback((config) => {
+    const dirName = config.projectDir.split(/[/\\]/).pop();
+    setProjectName(dirName);
+    setRunning(true);
+    setMode('presearch');
+
+    // Spawn Claude via IPC
+    if (window.forgeAPI) {
+      window.forgeAPI.spawnClaude({
+        projectDir: config.projectDir,
+        prompt: config.description,
+        prdFile: config.prdFile,
+      });
+    }
+  }, []);
+
+  const handlePause = useCallback(() => {
+    if (window.forgeAPI) {
+      window.forgeAPI.sendForgeResponse('pause', {});
+    }
+  }, []);
+
   return (
     <div className="app-layout">
       <div className="app-layout__dashboard">
-        <p>Dashboard</p>
+        {mode !== 'launch' && (
+          <HeaderBar
+            projectName={projectName}
+            elapsed={elapsed}
+            mode={mode}
+            onPause={handlePause}
+          />
+        )}
+        {mode === 'launch' && <LaunchScreen onLaunch={handleLaunch} />}
+        {mode === 'presearch' && <div className="placeholder">Presearch mode — cards coming soon</div>}
+        {mode === 'build' && <div className="placeholder">Build mode — cards coming soon</div>}
       </div>
       <div className="app-layout__stage">
         <ClawdStage />

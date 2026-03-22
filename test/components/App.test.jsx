@@ -10,9 +10,9 @@ test('renders 2-zone layout', () => {
   expect(layout.children[1].classList.contains('app-layout__stage')).toBe(true);
 });
 
-test('dashboard zone contains content', () => {
+test('dashboard zone shows launch screen by default', () => {
   render(<App />);
-  expect(screen.getByText('Dashboard')).toBeTruthy();
+  expect(screen.getByText('Start Forge')).toBeTruthy();
 });
 
 test('stage zone contains canvas', () => {
