@@ -27,19 +27,22 @@ export function PresearchWizard() {
 
     const handleEvent = (event) => {
       switch (event.type) {
-        case 'forge:loop':
+        case 'forge:loop': {
           setThinking(true);
+          // Clamp loop to 1-5 range (Claude may send 0 for "Setup" or other unexpected values)
+          const loopNum = Math.max(1, Math.min(5, Number(event.loop) || 1));
           setCompletedLoops(prev => {
             const completed = [...prev];
-            if (event.loop > 1 && !completed.includes(event.loop - 1)) {
-              completed.push(event.loop - 1);
+            if (loopNum > 1 && !completed.includes(loopNum - 1)) {
+              completed.push(loopNum - 1);
             }
             return completed;
           });
-          setCurrentLoop(event.loop);
+          setCurrentLoop(loopNum);
           setCurrentLoopName(event.name || '');
-          addDiagnostic('sys', `Entering loop: ${event.name || `Loop ${event.loop}`}`);
+          addDiagnostic('sys', `Entering loop: ${event.name || `Loop ${loopNum}`}`);
           break;
+        }
 
         case 'forge:question':
           pendingQuestion.current = { id: event.id, question: event.content };
@@ -88,7 +91,6 @@ export function PresearchWizard() {
           break;
 
         case 'forge:decision': {
-          setThinking(false);
           // Skip if this decision echoes an already-answered question card
           const content = event.content || '';
           setCards(prev => {
@@ -98,12 +100,14 @@ export function PresearchWizard() {
             if (alreadyAnswered) return prev;
             return [...prev, { type: 'decision', summary: content }];
           });
+          // Don't set thinking=false here — decisions alone shouldn't hide the thinking bar.
+          // It stays on until a question/text card actually arrives for the user to interact with.
           addDiagnostic('ok', `Decision locked: ${content}`);
           break;
         }
 
         case 'forge:registry':
-          setThinking(false);
+          // Don't set thinking=false — registry populates the right panel, not the left
           if (event.requirements) {
             setRequirements(event.requirements);
             addDiagnostic('ok', `Registry updated: ${event.requirements.length} requirements`);
@@ -164,7 +168,7 @@ export function PresearchWizard() {
       <div className="presearch-wizard__content">
         {/* Left column: AI status + cards */}
         <div className="presearch-wizard__left">
-          {thinking && (
+          {(thinking || cards.length === 0) && (
             <div className="presearch-wizard__thinking-block">
               <div className="presearch-wizard__thinking">
                 <span className="presearch-wizard__thinking-text">
