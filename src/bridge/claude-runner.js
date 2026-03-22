@@ -7,6 +7,14 @@ class ClaudeRunner {
     this.ptyProcess = null;
   }
 
+  _buildEnv() {
+    return {
+      ...process.env,
+      FORCE_COLOR: '1',
+      FORGE_ENABLED: 'true',
+    };
+  }
+
   spawn(config, onData) {
     const { projectDir, prompt, prdFile } = config;
     const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/bash';
@@ -16,7 +24,7 @@ class ClaudeRunner {
       cols: 120,
       rows: 30,
       cwd: projectDir,
-      env: { ...process.env, FORCE_COLOR: '1' },
+      env: this._buildEnv(),
     });
 
     const workflowPrompt = '/workflow';
