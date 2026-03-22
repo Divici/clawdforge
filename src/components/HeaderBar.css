@@ -1,0 +1,36 @@
+.header-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-tan-dim);
+}
+.header-bar__logo {
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  color: var(--color-primary);
+}
+.header-bar__project {
+  color: var(--color-cream);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+.header-bar__timer {
+  margin-left: auto;
+  color: var(--color-tan);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+.header-bar__pause {
+  background: none;
+  border: 1px solid var(--color-tan-dim);
+  color: var(--color-cream);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.header-bar__pause:hover {
+  background: var(--color-surface-hover);
+}
