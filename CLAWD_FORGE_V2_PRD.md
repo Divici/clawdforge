@@ -25,13 +25,16 @@ The app should feel like a smart assistant dashboard, not a game and not a devel
 | Layer | Technology | Why |
 |-------|-----------|-----|
 | Shell | Electron | Wraps to `.exe`, spawns Claude CLI via `node-pty`, handles IPC |
-| Dashboard | DOM (vanilla JS) | Cards, steppers, forms — DOM is natural for this, no framework needed |
-| Claw'd Stage | HTML5 Canvas | Sprite animation needs pixel-level control |
+| Dashboard | Preact + preact/compat | Lightweight React-compatible UI (3kb). Standard React API — `useState`, `useEffect`, JSX. Card-based wizard maps perfectly to component tree |
+| Bundler | Vite | Fast dev server + HMR for Electron renderer. Handles JSX transpilation |
+| Claw'd Stage | HTML5 Canvas (vanilla JS) | Sprite animation needs pixel-level control, no framework benefit here |
 | Terminal | node-pty (hidden) | Still runs Claude CLI underneath, but output is parsed, not displayed |
+| CSS | CSS Modules or vanilla CSS | Scoped styles per component without adding a CSS-in-JS dep |
+| Testing | Vitest + @testing-library/preact | Same test runner as v1, component testing via Testing Library |
 | Layout | CSS Grid | 2-zone stacked layout |
 | Packaging | electron-builder | Produces single `.exe` with icon |
 
-No React. No UI frameworks. Vanilla JS + Canvas for Claw'd only.
+Preact with `preact/compat` alias — write standard React code (`import React from 'react'`), it resolves to Preact under the hood. Canvas retained for Claw'd stage only.
 
 ---
 
@@ -726,48 +729,66 @@ A JSON file written alongside `WORKFLOW_STATE.md` that stores the card log so th
 clawd-forge/
 ├── package.json
 ├── electron-builder.yml
+├── vite.config.ts                   # Vite config with preact/compat alias
 ├── forge.ico
-├── main.js                          # Electron main process
+├── main.js                          # Electron main process (Node, no bundling)
 ├── preload.js                       # IPC bridge (contextBridge)
 ├── launch.js                        # ELECTRON_RUN_AS_NODE workaround
 ├── vitest.config.mjs
 │
 ├── src/
-│   ├── index.html                   # 2-zone layout shell
-│   ├── styles/
-│   │   └── forge.css                # Full theme, layout, card styles, animations
+│   ├── index.html                   # Entry point, mounts Preact app
+│   ├── main.jsx                     # Preact app root, renders <App />
+│   ├── App.jsx                      # Top-level layout: Dashboard + ClawdStage
 │   │
-│   ├── bridge/
+│   ├── styles/
+│   │   ├── theme.css                # CSS custom properties (palette, typography)
+│   │   └── global.css               # Reset, base styles, layout grid
+│   │
+│   ├── hooks/
+│   │   ├── useForgeEvents.js        # Subscribe to forge events via IPC
+│   │   ├── useAutoScroll.js         # Auto-scroll + "jump to latest" logic
+│   │   ├── useElapsedTimer.js       # Elapsed time counter
+│   │   └── useForgeAPI.js           # Wrapper around window.forgeAPI IPC calls
+│   │
+│   ├── bridge/                      # Main process (Node.js, not bundled by Vite)
 │   │   ├── claude-runner.js         # Spawns Claude CLI via node-pty (hidden)
 │   │   ├── stage-parser.js          # Structured marker parser + regex fallback
 │   │   ├── patterns.json            # Fallback regex patterns (v1 compat)
 │   │   ├── event-bus.js             # Pub/sub EventEmitter
 │   │   └── forge-log.js             # Persistence: read/write forge-log.json
 │   │
-│   ├── dashboard/
-│   │   ├── dashboard.js             # Mode switcher (launch / presearch / build / complete)
-│   │   ├── launch-screen.js         # Directory picker, PRD/description input, resume detect
-│   │   ├── header-bar.js            # Persistent header: title, project, timer, pause
+│   ├── components/
+│   │   ├── HeaderBar.jsx            # Persistent header: title, project, timer, pause
+│   │   ├── LaunchScreen.jsx         # Directory picker, PRD/description input, resume detect
+│   │   │
 │   │   ├── presearch/
-│   │   │   ├── presearch-wizard.js  # Presearch mode orchestrator
-│   │   │   ├── stepper.js           # 5-loop progress stepper
-│   │   │   ├── question-card.js     # Option selection card with pros/cons
-│   │   │   ├── accordion-card.js    # Nested decision groups (AI deep dive)
-│   │   │   ├── registry-card.js     # Requirements registry checklist
-│   │   │   ├── decision-card.js     # Locked decision confirmation
-│   │   │   └── text-card.js         # Open-ended text input card
-│   │   └── build/
-│   │       ├── build-dashboard.js   # Build mode orchestrator
-│   │       ├── phase-stepper.js     # Horizontal phase progress (distinct from presearch)
-│   │       ├── card-log.js          # Scrollable card log with auto-scroll
-│   │       ├── task-card.js         # Completed task/commit card
-│   │       ├── blocker-card.js      # Intervention: blocker requiring user input
-│   │       ├── failure-card.js      # Intervention: agent failure
-│   │       ├── context-card.js      # Intervention: context handoff warning
-│   │       ├── pause-screen.js      # Paused state with instruction input
-│   │       └── completion-screen.js # Final summary
+│   │   │   ├── PresearchWizard.jsx  # Presearch mode orchestrator
+│   │   │   ├── PresearchStepper.jsx # 5-loop progress stepper (compact)
+│   │   │   ├── QuestionCard.jsx     # Option selection card with pros/cons
+│   │   │   ├── AccordionCard.jsx    # Nested decision groups (AI deep dive)
+│   │   │   ├── RegistryCard.jsx     # Requirements registry checklist
+│   │   │   ├── DecisionCard.jsx     # Locked decision confirmation
+│   │   │   └── TextCard.jsx         # Open-ended text input card
+│   │   │
+│   │   ├── build/
+│   │   │   ├── BuildDashboard.jsx   # Build mode orchestrator
+│   │   │   ├── PhaseStepper.jsx     # Horizontal phase progress (distinct style)
+│   │   │   ├── CardLog.jsx          # Scrollable card log with auto-scroll
+│   │   │   ├── TaskCard.jsx         # Completed task/commit card
+│   │   │   ├── BlockerCard.jsx      # Intervention: blocker requiring user input
+│   │   │   ├── FailureCard.jsx      # Intervention: agent failure
+│   │   │   ├── ContextCard.jsx      # Intervention: context handoff warning
+│   │   │   ├── PauseScreen.jsx      # Paused state with instruction input
+│   │   │   └── CompletionScreen.jsx # Final summary
+│   │   │
+│   │   └── shared/
+│   │       ├── Card.jsx             # Base card wrapper (surface, border, expand/collapse)
+│   │       ├── ProConList.jsx       # ✓/✗ list used in question options
+│   │       ├── Badge.jsx            # Status badges (recommended, locked, count)
+│   │       └── Button.jsx           # Styled button (primary, secondary, ghost)
 │   │
-│   ├── clawd/
+│   ├── clawd/                       # Canvas-based, NOT Preact (vanilla JS)
 │   │   ├── stage-renderer.js        # 30fps canvas loop for Claw'd stage
 │   │   ├── clawd-mascot.js          # Main Claw'd: costume management, animation
 │   │   ├── helpers.js               # Mini-Claw'd subagent sprites
@@ -797,8 +818,13 @@ clawd-forge/
     ├── stage-parser.test.js          # Structured marker parsing tests
     ├── event-bus.test.js             # Pub/sub tests
     ├── forge-log.test.js             # Persistence read/write tests
-    ├── dashboard.test.js             # Mode switching tests
-    └── card-rendering.test.js        # Card type rendering tests
+    ├── components/
+    │   ├── LaunchScreen.test.jsx     # Launch screen rendering + interactions
+    │   ├── QuestionCard.test.jsx     # Card option selection
+    │   ├── CardLog.test.jsx          # Auto-scroll behavior
+    │   └── PhaseStepper.test.jsx     # Stepper state transitions
+    └── integration/
+        └── marker-to-card.test.js    # Structured marker → card rendering pipeline
 ```
 
 ---
@@ -836,75 +862,351 @@ The env var `FORGE_ENABLED=true` is set by the Electron app when spawning Claude
 
 ---
 
-## Build Order (v2)
+## Build Order
 
-### Phase 1 — Layout & Theme
-1. Update `index.html` to 2-zone stacked layout (dashboard + 180px stage)
-2. New `forge.css` with Claude brand palette
-3. Remove CRT overlay, Matrix green references
-4. Verify: app launches with new layout and warm color scheme
+See **Roadmap** section above for detailed phase briefs with requirements mapping, exit criteria, and dependency graph. The build skill will use those phases directly.
 
-### Phase 2 — Launch Screen
-5. Implement `launch-screen.js` — directory picker, PRD dropdown, description textarea
-6. Add resume detection (scan for WORKFLOW_STATE.md)
-7. Wire to claude-runner spawn
-8. Verify: can launch Claude from new UI
+**Summary execution order:**
+1. **scaffold** — Preact + Vite + Electron setup, 2-zone layout, Claude palette
+2. **bridge** — Structured marker parser, stdin translation, forge-log persistence, hidden PTY
+3. **launch** — Launch screen, resume detection, header bar
+4. **presearch-ui** — All presearch card components, stepper, wizard orchestrator
+5. **build-ui** — Phase stepper, card log, intervention cards, pause/resume, completion
+6. **clawd-stage** — Canvas, mascot, costumes, subagent helpers (parallel with 4-5)
+7. **skill-mods** — Forge Output Protocol in skill files (parallel with 4-5)
+8. **polish** — Real sprites, resize handling, packaging, branding
 
-### Phase 3 — Structured Marker Parser
-9. Design marker format specification
-10. Write parser tests for all marker types
-11. Implement structured parser in `stage-parser.js` with regex fallback
-12. Verify: parser extracts markers from sample output
+---
 
-### Phase 4 — Presearch Wizard
-13. Implement `presearch-wizard.js` — mode orchestrator
-14. Implement card types: question, accordion, registry, decision, text
-15. Implement presearch stepper
-16. Wire card interactions → stdin translation → Claude
-17. Verify: full presearch loop works through dashboard cards
+---
 
-### Phase 5 — Build Dashboard
-18. Implement `build-dashboard.js` — mode orchestrator
-19. Implement phase stepper (visually distinct from presearch)
-20. Implement card log with auto-scroll behavior
-21. Implement task cards, intervention cards
-22. Wire to forge events
-23. Verify: build progress displays correctly with card log
+## Requirements Registry
 
-### Phase 6 — Pause / Resume
-24. Implement pause button in header bar
-25. Implement pause screen with instruction input
-26. Implement stdin injection on resume
-27. Wire forge-log.json persistence
-28. Verify: pause, type instruction, resume works end-to-end
+| ID | Requirement | Category | Priority |
+|----|------------|----------|----------|
+| R-001 | 2-zone stacked layout: full-width dashboard (flex) + Claw'd stage (180px fixed) | Technical | Must-have |
+| R-002 | Launch screen with directory picker, PRD file dropdown, project description textarea | Functional | Must-have |
+| R-003 | Resume detection: scan for WORKFLOW_STATE.md, show resume option with phase info | Functional | Must-have |
+| R-004 | Presearch wizard: render Claude questions as interactive cards with option selection | Functional | Must-have |
+| R-005 | Question cards with pros/cons, recommended badge, collapsed alternatives, "Other" text input | Functional | Must-have |
+| R-006 | Accordion card for nested decisions (AI Deep Dive) with cascading section reveal | Functional | Must-have |
+| R-007 | Requirements registry card with priority editing and coverage tracking | Functional | Should-have |
+| R-008 | Decision lock cards with green checkmark and optional "Change" action | Functional | Must-have |
+| R-009 | Presearch stepper (5 loops, compact, visually distinct from build stepper) | Functional | Must-have |
+| R-010 | Build dashboard with horizontal phase stepper showing roadmap phases | Functional | Must-have |
+| R-011 | Build card log: vertically scrolling task/commit cards with expand/collapse | Functional | Must-have |
+| R-012 | Auto-scroll card log, pause on user scroll-up, "Jump to latest" button | Functional | Must-have |
+| R-013 | Intervention cards: blocker, agent failure, context handoff — distinct styling | Functional | Must-have |
+| R-014 | Pause button in header bar during build mode | Functional | Must-have |
+| R-015 | Pause screen with optional instruction textarea, resume sends queued text to stdin | Functional | Must-have |
+| R-016 | Completion screen with phase count, test count, deploy URL, known issues | Functional | Must-have |
+| R-017 | Persistent header bar: logo, project name, elapsed timer, pause button | Functional | Must-have |
+| R-018 | Structured marker protocol (`[FORGE:*]`) for parsing Claude output into UI cards | Technical | Must-have |
+| R-019 | Stdin translation: user card interactions translated to natural language text sent to PTY | Technical | Must-have |
+| R-020 | Regex fallback parser for degraded operation without modified skill files | Technical | Should-have |
+| R-021 | forge-log.json persistence for card log reconstruction on resume | Technical | Must-have |
+| R-022 | Claw'd mascot canvas (180px) with costume changes per phase/stage | Functional | Must-have |
+| R-023 | 14 Claw'd costumes mapped to workflow phases (see costume table) | Functional | Must-have |
+| R-024 | Subagent mini-Claw'd helpers: walk in on spawn, walk off on done, max 6 visible | Functional | Must-have |
+| R-025 | Claude brand color palette (orange/cream/charcoal), no CRT overlay | Technical | Must-have |
+| R-026 | Preact with preact/compat for dashboard components, Vite bundler | Technical | Must-have |
+| R-027 | Hidden PTY — terminal never visible to user, Claude runs underneath | Technical | Must-have |
+| R-028 | Skill file modifications: add Forge Output Protocol to presearch/build/workflow skills | Technical | Must-have |
+| R-029 | FORGE_ENABLED env var set on Claude spawn to trigger marker emission | Technical | Must-have |
+| R-030 | Status counters (agents, decisions, tests, artifacts) as inline badges on build stepper | Functional | Should-have |
+| R-031 | Open-ended text question cards with submit button | Functional | Must-have |
+| R-032 | Electron packaging to `.exe` with updated name/icon (Claw'd Forge) | Technical | Must-have |
 
-### Phase 7 — Claw'd Stage
-29. Set up 180px canvas with stage-renderer.js
-30. Implement clawd-mascot.js with costume swapping
-31. Implement helpers.js for subagent mini-Claw'ds
-32. Create placeholder sprites (rectangles) for all costumes
-33. Wire to forge events for costume/helper changes
-34. Verify: Claw'd changes costume on phase transitions, helpers appear/disappear
+---
 
-### Phase 8 — Skill File Modifications
-35. Add Forge Output Protocol section to presearch SKILL.md
-36. Add Forge Output Protocol section to build SKILL.md
-37. Add Forge Output Protocol section to workflow SKILL.md
-38. Add FORGE_ENABLED env var to claude-runner.js spawn
-39. Test end-to-end with modified skills
+## Constraints Summary
 
-### Phase 9 — Completion & Polish
-40. Implement completion screen
-41. Replace placeholder sprites with AI-generated Claw'd sprites
-42. Responsive resize handling
-43. Stitch design system generation for final palette refinement
-44. Window title, icon updates (rebrand to Claw'd Forge)
+| Constraint | Value |
+|-----------|-------|
+| Platform | Windows (primary), Electron cross-platform |
+| Existing codebase | v1 Electron app with node-pty, stage-parser, canvas — partial reuse |
+| Framework | Preact + Vite (new for v2, replaces vanilla JS) |
+| Canvas | Retained for Claw'd stage only, not dashboard |
+| Terminal | Hidden — user never interacts with raw terminal |
+| Claude CLI | Runs via node-pty, same as v1 |
+| Sprite assets | AI-generated by user, format: horizontal sprite sheets ~96x96 per frame |
+| Build tool | `/build` skill consumes this file as PRESEARCH.md |
 
-### Phase 10 — Package
-45. Update electron-builder.yml with new name/icon
-46. Build `.exe`
-47. Test on clean machine
-48. Rename repo references from Matrix Forge to Claw'd Forge
+---
+
+## Technical Stack
+
+| Layer | Choice | Alternatives Considered | Why This Choice |
+|-------|--------|------------------------|-----------------|
+| UI Framework | Preact + preact/compat | Vanilla JS (v1), React, Lit, Svelte | React API familiarity, 3kb size, component model fits card-heavy UI. Vanilla JS too painful for 15+ interactive card components |
+| Bundler | Vite | Webpack, esbuild, Parcel | Fast HMR, native ESM, Preact plugin available, minimal config |
+| Testing | Vitest + @testing-library/preact | Jest, Cypress | Same runner as v1, integrates with Vite, component testing via Testing Library |
+| Canvas | Vanilla JS (no framework) | Preact canvas wrapper, Pixi.js | Sprite animation is simple enough, no framework benefit for 30fps render loop |
+| CSS | CSS Modules or vanilla CSS | Tailwind, styled-components, Emotion | No build complexity, scoped styles, matches project simplicity |
+| Electron IPC | contextBridge + ipcRenderer | electron-store, custom WebSocket | Same proven pattern as v1, no new deps |
+| Persistence | JSON files (forge-log.json) | SQLite, IndexedDB | Simple read/write, human-readable, matches WORKFLOW_STATE.md pattern |
+
+---
+
+## Testing & Quality Strategy
+
+**Quality gate commands:**
+```bash
+npx vitest run                    # Unit + component tests
+npx eslint src/ --ext .js,.jsx    # Lint
+```
+
+**Test coverage by area:**
+- **Stage parser**: marker extraction for all `[FORGE:*]` types, fallback regex, malformed input
+- **Event bus**: pub/sub, multiple listeners, cleanup
+- **Forge log**: read/write/append, corrupt file handling, resume reconstruction
+- **Components**: card rendering, option selection, accordion expand/collapse, auto-scroll
+- **Integration**: structured marker → parsed event → rendered card pipeline
+
+**TDD workflow**: Write failing test → implement → refactor. Applied per user's global rules.
+
+---
+
+## Bootstrap Configuration
+
+- **Directory structure**: Standard — `src/components/`, `src/hooks/`, `src/bridge/`, `src/clawd/`, `test/`
+- **Memory bank**: `memory-bank/` for cross-session persistence (standard)
+- **Decisions directory**: `decisions/` for ADR entries
+- **Gitignore additions**: `WORKFLOW_STATE.md`, `forge-log.json`, `STUDY_GUIDE.md`, `dist/`, `node_modules/`
+- **TDD**: Yes
+- **Worktree isolation**: Yes
+- **Conventional commits**: Yes — `feat(dashboard):`, `feat(clawd):`, `feat(bridge):`, `fix()`, `chore()`
+
+---
+
+## Roadmap
+
+### Phase: scaffold (depends on: none)
+**Requirements addressed:**
+- R-001: "2-zone stacked layout"
+- R-025: "Claude brand color palette"
+- R-026: "Preact with preact/compat, Vite bundler"
+
+**Scope:** Set up the Preact + Vite + Electron scaffold. Replace the v1 3-panel layout with 2-zone stacked layout (dashboard flex + 180px Claw'd stage). Apply Claude brand palette as CSS custom properties. Verify the app launches with the new layout rendering placeholder content in both zones.
+
+**Key risks:** Vite + Electron integration may need electron-vite or custom config for main/renderer process separation.
+**Exit criteria:**
+- [ ] R-001: App renders 2-zone layout with correct proportions
+- [ ] R-025: Palette CSS variables applied, no Matrix green references remain
+- [ ] R-026: Preact components render in Electron renderer process via Vite
+- [ ] Tests passing, quality gates green
+
+### Phase: bridge (depends on: scaffold)
+**Requirements addressed:**
+- R-018: "Structured marker protocol"
+- R-019: "Stdin translation"
+- R-020: "Regex fallback parser"
+- R-021: "forge-log.json persistence"
+- R-027: "Hidden PTY"
+- R-029: "FORGE_ENABLED env var"
+
+**Scope:** Upgrade the stage parser to extract `[FORGE:*]` structured markers with key-value parsing. Retain v1 regex patterns as fallback. Implement forge-log.js for JSON persistence. Update claude-runner.js to set FORGE_ENABLED env var and hide PTY output (no xterm.js). Implement stdin translation for sending user responses to Claude.
+
+**Key risks:** Marker parsing edge cases (multi-line content, special characters in option text). PTY output buffering may split markers across chunks.
+**Exit criteria:**
+- [ ] R-018: Parser extracts all marker types from sample output
+- [ ] R-019: Stdin translation sends correct text for each user action type
+- [ ] R-020: Fallback regex detects mode/stage/agent events without markers
+- [ ] R-021: forge-log.json writes and reads correctly, survives app restart
+- [ ] R-027: No terminal UI rendered, PTY runs in background
+- [ ] R-029: FORGE_ENABLED=true set in spawned process env
+- [ ] Tests passing, quality gates green
+
+### Phase: launch (depends on: bridge)
+**Requirements addressed:**
+- R-002: "Launch screen with directory picker"
+- R-003: "Resume detection"
+- R-017: "Persistent header bar"
+
+**Scope:** Build the launch screen component (directory picker, PRD dropdown, description textarea, resume detection). Build the persistent header bar (logo, project name, elapsed timer). Wire launch to claude-runner spawn with correct initial input based on user selection.
+
+**Key risks:** None significant — straightforward UI.
+**Exit criteria:**
+- [ ] R-002: User can browse for directory, select PRD or type description
+- [ ] R-003: WORKFLOW_STATE.md detected, resume option shown with phase info
+- [ ] R-017: Header bar renders with timer that ticks every second
+- [ ] Tests passing, quality gates green
+
+### Phase: presearch-ui (depends on: launch)
+**Requirements addressed:**
+- R-004: "Presearch wizard with interactive cards"
+- R-005: "Question cards with pros/cons"
+- R-006: "Accordion card for nested decisions"
+- R-007: "Requirements registry card"
+- R-008: "Decision lock cards"
+- R-009: "Presearch stepper"
+- R-031: "Open-ended text question cards"
+
+**Scope:** Build all presearch card components: QuestionCard, AccordionCard, RegistryCard, DecisionCard, TextCard. Build the PresearchStepper (compact 5-loop stepper). Build PresearchWizard orchestrator that subscribes to forge events and renders appropriate cards. Wire card interactions to stdin translation.
+
+**Key risks:** Card rendering must handle variable-length option lists and nested accordions gracefully. Stepper must handle AI Deep Dive sub-step under Constraints.
+**Parallel opportunities:** Shared components (Card, ProConList, Badge, Button) can be built alongside.
+**Exit criteria:**
+- [ ] R-004: Questions from Claude render as interactive cards
+- [ ] R-005: Options show pros/cons, recommended badge, "Other" input
+- [ ] R-006: Accordion sections cascade based on prior selections
+- [ ] R-007: Registry renders checklist with priority badges and coverage count
+- [ ] R-008: Locked decisions show green checkmark, "Change" link available
+- [ ] R-009: Stepper advances through 5 loops, completed loops show checkmark
+- [ ] R-031: Text questions render with input field and submit button
+- [ ] Tests passing, quality gates green
+
+### Phase: build-ui (depends on: presearch-ui)
+**Requirements addressed:**
+- R-010: "Build dashboard with phase stepper"
+- R-011: "Build card log with expand/collapse"
+- R-012: "Auto-scroll, jump to latest"
+- R-013: "Intervention cards"
+- R-014: "Pause button"
+- R-015: "Pause screen with instruction input"
+- R-016: "Completion screen"
+- R-030: "Status counter badges"
+
+**Scope:** Build the build mode: PhaseStepper (horizontal, visually distinct from presearch stepper), CardLog with auto-scroll behavior, TaskCard, intervention cards (BlockerCard, FailureCard, ContextCard), PauseScreen with instruction textarea, CompletionScreen. Wire pause button in header bar. Implement stdin injection on resume.
+
+**Key risks:** Auto-scroll behavior needs careful handling (pause on user scroll, resume on "jump to latest"). Pause must wait for current atomic unit to complete.
+**Exit criteria:**
+- [ ] R-010: Phase stepper shows roadmap phases with correct states
+- [ ] R-011: Task cards render with commit info, files, test count, quality gates
+- [ ] R-012: Auto-scroll works, pauses on user scroll, "Jump to latest" re-enables
+- [ ] R-013: Intervention cards render with distinct styling and action buttons
+- [ ] R-014: Pause button visible during build, hidden otherwise
+- [ ] R-015: Pause screen shows instruction input, resume sends queued text
+- [ ] R-016: Completion screen shows summary stats
+- [ ] R-030: Status counters display as badges on stepper
+- [ ] Tests passing, quality gates green
+
+### Phase: clawd-stage (depends on: scaffold)
+**Requirements addressed:**
+- R-022: "Claw'd mascot canvas with costume changes"
+- R-023: "14 Claw'd costumes"
+- R-024: "Subagent mini-Claw'd helpers"
+
+**Scope:** Build the 180px canvas stage with 30fps render loop. Implement Claw'd mascot with costume management (swap sprite sheets on phase/stage events). Implement subagent helpers (walk in/out, bob animation, max 6 visible). Create placeholder rectangle sprites for all 14 costumes + helper. Wire to forge events.
+
+**Key risks:** Sprite assets are AI-generated by user — must work with placeholder rectangles first, swap later.
+**Parallel opportunities:** Can be built in parallel with presearch-ui and build-ui since it's canvas-only with no Preact dependency.
+**Exit criteria:**
+- [ ] R-022: Canvas renders at 180px height, Claw'd visible and animated
+- [ ] R-023: Costume changes on forge events (placeholder sprites acceptable)
+- [ ] R-024: Helpers walk in on agent:spawn, walk off on agent:done, max 6 visible
+- [ ] Tests passing, quality gates green
+
+### Phase: skill-mods (depends on: bridge)
+**Requirements addressed:**
+- R-028: "Skill file modifications with Forge Output Protocol"
+
+**Scope:** Add the Forge Output Protocol section to presearch, build, and workflow SKILL.md files. Protocol instructs Claude to emit `[FORGE:*]` markers when FORGE_ENABLED=true env var is detected. Test end-to-end marker emission with a real Claude run.
+
+**Key risks:** Skill file changes affect all future workflow runs. Must be conditional on FORGE_ENABLED so non-Forge usage is unaffected.
+**Parallel opportunities:** Can be built in parallel with UI phases since it only touches skill files.
+**Exit criteria:**
+- [ ] R-028: All three skill files include Forge Output Protocol section
+- [ ] Markers emitted when FORGE_ENABLED=true, not emitted otherwise
+- [ ] End-to-end test: Claude emits markers, parser extracts them, cards render
+
+### Phase: polish (depends on: presearch-ui, build-ui, clawd-stage, skill-mods)
+**Requirements addressed:**
+- R-023: "14 Claw'd costumes" (replace placeholders with real sprites)
+- R-032: "Electron packaging with updated name/icon"
+
+**Scope:** Replace placeholder sprites with AI-generated Claw'd costume sprites. Responsive resize handling for dashboard and canvas. Final palette refinement (optionally via Stitch). Update window title, icon, electron-builder config for "Claw'd Forge" branding. Build and test `.exe`.
+
+**Exit criteria:**
+- [ ] R-023: All 14 costumes render with real sprite assets
+- [ ] R-032: .exe builds with Claw'd Forge name and icon
+- [ ] App resizes gracefully
+- [ ] Full end-to-end workflow test passes
+
+---
+
+## Phase Dependency Map
+
+```
+Phase: scaffold (none)
+  ├── Phase: bridge (scaffold)
+  │     ├── Phase: launch (bridge)
+  │     │     └── Phase: presearch-ui (launch)
+  │     │           └── Phase: build-ui (presearch-ui) ──┐
+  │     └── Phase: skill-mods (bridge)  [parallel]       │
+  ├── Phase: clawd-stage (scaffold)     [parallel]       │
+  │                                                      │
+  └── Phase: polish (presearch-ui, build-ui, clawd-stage, skill-mods)
+```
+
+---
+
+## MVP Validation Checklist
+
+| R-ID | Requirement | Phase | Priority | Status |
+|------|------------|-------|----------|--------|
+| R-001 | 2-zone stacked layout | scaffold | Must-have | Planned |
+| R-002 | Launch screen with directory picker | launch | Must-have | Planned |
+| R-003 | Resume detection | launch | Must-have | Planned |
+| R-004 | Presearch wizard cards | presearch-ui | Must-have | Planned |
+| R-005 | Question cards with pros/cons | presearch-ui | Must-have | Planned |
+| R-006 | Accordion card | presearch-ui | Must-have | Planned |
+| R-007 | Requirements registry card | presearch-ui | Should-have | Planned |
+| R-008 | Decision lock cards | presearch-ui | Must-have | Planned |
+| R-009 | Presearch stepper | presearch-ui | Must-have | Planned |
+| R-010 | Build phase stepper | build-ui | Must-have | Planned |
+| R-011 | Build card log | build-ui | Must-have | Planned |
+| R-012 | Auto-scroll + jump to latest | build-ui | Must-have | Planned |
+| R-013 | Intervention cards | build-ui | Must-have | Planned |
+| R-014 | Pause button | build-ui | Must-have | Planned |
+| R-015 | Pause screen with instructions | build-ui | Must-have | Planned |
+| R-016 | Completion screen | build-ui | Must-have | Planned |
+| R-017 | Persistent header bar | launch | Must-have | Planned |
+| R-018 | Structured marker protocol | bridge | Must-have | Planned |
+| R-019 | Stdin translation | bridge | Must-have | Planned |
+| R-020 | Regex fallback parser | bridge | Should-have | Planned |
+| R-021 | forge-log.json persistence | bridge | Must-have | Planned |
+| R-022 | Claw'd mascot canvas | clawd-stage | Must-have | Planned |
+| R-023 | 14 costumes | clawd-stage + polish | Must-have | Planned |
+| R-024 | Subagent helpers | clawd-stage | Must-have | Planned |
+| R-025 | Claude brand palette | scaffold | Must-have | Planned |
+| R-026 | Preact + Vite | scaffold | Must-have | Planned |
+| R-027 | Hidden PTY | bridge | Must-have | Planned |
+| R-028 | Skill file modifications | skill-mods | Must-have | Planned |
+| R-029 | FORGE_ENABLED env var | bridge | Must-have | Planned |
+| R-030 | Status counter badges | build-ui | Should-have | Planned |
+| R-031 | Text question cards | presearch-ui | Must-have | Planned |
+| R-032 | Electron packaging | polish | Must-have | Planned |
+
+---
+
+## Scope Tiers
+
+**Must-have (MVP):**
+All R-IDs except R-007, R-020, R-030
+
+**Should-have:**
+- R-007: Requirements registry card (priority editing, coverage tracking)
+- R-020: Regex fallback parser
+- R-030: Status counter badges on build stepper
+
+**Cut-if-behind:**
+- Real sprite assets (placeholder rectangles are acceptable for MVP — R-023 partial)
+- Stitch design system generation (use hardcoded palette instead)
+- Responsive resize polish
+
+---
+
+## Risks & Mitigations
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Structured marker parsing unreliable (Claude output varies) | Cards don't render correctly | Strict marker format, comprehensive parser tests, regex fallback |
+| Vite + Electron integration issues | Build/dev workflow breaks | Use electron-vite plugin or proven Vite + Electron template |
+| PTY output buffering splits markers across chunks | Parser misses markers | Line buffering in stage-parser (already implemented in v1) |
+| Sprite assets not ready | Claw'd stage looks bare | Placeholder rectangle sprites with label text, swap later |
+| Skill file changes break non-Forge workflow | All workflow runs affected | FORGE_ENABLED env var guard — markers only emitted inside Forge |
+| Preact/compat gaps | Some React patterns don't work | Preact/compat covers 99% of React API; known gaps are rare edge cases |
 
 ---
 
