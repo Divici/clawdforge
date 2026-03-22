@@ -28,22 +28,26 @@ function createWindow() {
     },
   });
 
-  // Dev: load Vite dev server; Prod: load built files
-  if (!app.isPackaged) {
+  // Load the renderer — prefer built output, fall back to Vite dev server
+  const builtPath = path.join(__dirname, 'dist-renderer', 'index.html');
+  if (fs.existsSync(builtPath)) {
+    mainWindow.loadFile(builtPath);
+  } else if (!app.isPackaged) {
+    // No built output — try Vite dev server
     mainWindow.loadURL('http://localhost:5173').catch(() => {
-      // Vite not running — try built output or raw source
-      const builtPath = path.join(__dirname, 'dist-renderer', 'index.html');
-      if (fs.existsSync(builtPath)) {
-        mainWindow.loadFile(builtPath);
-      } else {
-        mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
-      }
+      mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
     });
   } else {
-    mainWindow.loadFile(path.join(__dirname, 'dist-renderer', 'index.html'));
+    // Packaged but no dist-renderer — should not happen
+    console.error('dist-renderer/index.html not found in packaged app');
   }
 
   mainWindow.setMenuBarVisibility(false);
+
+  // Open DevTools in dev mode for debugging
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+  }
 }
 
 // Forward v1 + v2 events to renderer
