@@ -87,11 +87,20 @@ export function PresearchWizard() {
           addDiagnostic('sys', `Text input requested: ${event.id}`);
           break;
 
-        case 'forge:decision':
+        case 'forge:decision': {
           setThinking(false);
-          setCards(prev => [...prev, { type: 'decision', summary: event.content }]);
-          addDiagnostic('ok', `Decision locked: ${event.content}`);
+          // Skip if this decision echoes an already-answered question card
+          const content = event.content || '';
+          setCards(prev => {
+            const alreadyAnswered = prev.some(c =>
+              c.answered && content.includes(c.selectedOption)
+            );
+            if (alreadyAnswered) return prev;
+            return [...prev, { type: 'decision', summary: content }];
+          });
+          addDiagnostic('ok', `Decision locked: ${content}`);
           break;
+        }
 
         case 'forge:registry':
           setThinking(false);
@@ -109,8 +118,12 @@ export function PresearchWizard() {
   const handleSelect = useCallback((id, option) => {
     setThinking(true);
     addDiagnostic('log', `User selected: ${option.name}`);
-    // Remove the answered question — Claude's forge:decision event will add the lock card
-    setCards(prev => prev.filter(card => !(card.type === 'question' && card.id === id)));
+    // Mark the question as answered — keeps the card but shows it collapsed with the selection
+    setCards(prev => prev.map(card =>
+      card.type === 'question' && card.id === id
+        ? { ...card, answered: true, selectedOption: option.name }
+        : card
+    ));
     if (window.forgeAPI) {
       if (option.recommended) {
         window.forgeAPI.sendForgeResponse('select-recommended', { name: option.name });
@@ -125,8 +138,12 @@ export function PresearchWizard() {
   const handleTextSubmit = useCallback((id, text) => {
     setThinking(true);
     addDiagnostic('log', 'User submitted text response');
-    // Remove the answered text card — Claude's forge:decision event will add the lock card
-    setCards(prev => prev.filter(card => !(card.type === 'text' && card.id === id)));
+    // Mark as answered
+    setCards(prev => prev.map(card =>
+      card.type === 'text' && card.id === id
+        ? { ...card, answered: true, selectedOption: text }
+        : card
+    ));
     if (window.forgeAPI) {
       window.forgeAPI.sendForgeResponse('custom-text', { text });
     }
@@ -161,8 +178,34 @@ export function PresearchWizard() {
             {cards.map((card, i) => {
               switch (card.type) {
                 case 'question':
+                  if (card.answered) {
+                    return (
+                      <DecisionCard
+                        key={i}
+                        summary={`${card.question}: ${card.selectedOption}`}
+                        onReopen={() => {
+                          setCards(prev => prev.map((c, idx) =>
+                            idx === i ? { ...c, answered: false, selectedOption: null } : c
+                          ));
+                        }}
+                      />
+                    );
+                  }
                   return <QuestionCard key={i} id={card.id} question={card.question} options={card.options} onSelect={handleSelect} />;
                 case 'text':
+                  if (card.answered) {
+                    return (
+                      <DecisionCard
+                        key={i}
+                        summary={card.selectedOption}
+                        onReopen={() => {
+                          setCards(prev => prev.map((c, idx) =>
+                            idx === i ? { ...c, answered: false, selectedOption: null } : c
+                          ));
+                        }}
+                      />
+                    );
+                  }
                   return <TextCard key={i} id={card.id} question={card.question} onSubmit={handleTextSubmit} />;
                 case 'decision':
                   return <DecisionCard key={i} summary={card.summary} />;

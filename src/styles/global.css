@@ -53,6 +53,21 @@ html, body {
   flex-shrink: 0;
 }
 
+/* Scrollbar — Stitch: thin, dark, matches surface hierarchy */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface-lowest);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-high);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline-variant);
+}
+
 /* Utility classes */
 .ghost-border {
   border: 1px solid rgba(85, 67, 61, 0.2);
