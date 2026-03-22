@@ -1,0 +1,14 @@
+.presearch-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.presearch-wizard__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

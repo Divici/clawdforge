@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'preact/hooks';
 import { HeaderBar } from './components/HeaderBar';
 import { LaunchScreen } from './components/LaunchScreen';
+import { PresearchWizard } from './components/presearch/PresearchWizard';
 import { ClawdStage } from './clawd/ClawdStage';
 import { useElapsedTimer } from './hooks/useElapsedTimer';
 
@@ -44,7 +45,7 @@ export function App() {
           />
         )}
         {mode === 'launch' && <LaunchScreen onLaunch={handleLaunch} />}
-        {mode === 'presearch' && <div className="placeholder">Presearch mode — cards coming soon</div>}
+        {mode === 'presearch' && <PresearchWizard />}
         {mode === 'build' && <div className="placeholder">Build mode — cards coming soon</div>}
       </div>
       <div className="app-layout__stage">

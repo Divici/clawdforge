@@ -1,0 +1,63 @@
+.accordion-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.accordion-card__title {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-cream);
+  margin: 0;
+}
+
+.accordion-card__count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-tan);
+}
+
+.accordion-card__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.accordion-card__section {
+  background: var(--color-bg);
+  border: 1px solid var(--color-tan-dim);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.accordion-card__section--active {
+  border-color: var(--color-primary);
+}
+
+.accordion-card__section--complete {
+  border-color: var(--color-success);
+  opacity: 0.7;
+}
+
+.accordion-card__section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-cream);
+  cursor: pointer;
+}
+
+.accordion-card__locked {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--color-success);
+  text-transform: uppercase;
+}
+
+.accordion-card__section-body {
+  padding: 0 12px 12px;
+}
