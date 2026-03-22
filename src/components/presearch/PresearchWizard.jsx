@@ -3,8 +3,8 @@ import { PresearchStepper } from './PresearchStepper';
 import { QuestionCard } from './QuestionCard';
 import { TextCard } from './TextCard';
 import { DecisionCard } from './DecisionCard';
-import { AccordionCard } from './AccordionCard';
-import { RegistryCard } from './RegistryCard';
+import { RequirementsPanel } from './RequirementsPanel';
+import { DiagnosticFeed } from './DiagnosticFeed';
 import './PresearchWizard.css';
 
 export function PresearchWizard() {
@@ -13,8 +13,14 @@ export function PresearchWizard() {
   const [completedLoops, setCompletedLoops] = useState([]);
   const [cards, setCards] = useState([]);
   const [thinking, setThinking] = useState(true);
+  const [requirements, setRequirements] = useState([]);
+  const [diagnosticEvents, setDiagnosticEvents] = useState([]);
   const pendingQuestion = useRef(null);
   const pendingOptions = useRef([]);
+
+  const addDiagnostic = useCallback((level, message) => {
+    setDiagnosticEvents(prev => [...prev, { level, message }]);
+  }, []);
 
   useEffect(() => {
     if (!window.forgeAPI) return;
@@ -22,7 +28,7 @@ export function PresearchWizard() {
     const handleEvent = (event) => {
       switch (event.type) {
         case 'forge:loop':
-          setThinking(true); // New loop = Claude is working, show indicator
+          setThinking(true);
           setCompletedLoops(prev => {
             const completed = [...prev];
             if (event.loop > 1 && !completed.includes(event.loop - 1)) {
@@ -32,11 +38,13 @@ export function PresearchWizard() {
           });
           setCurrentLoop(event.loop);
           setCurrentLoopName(event.name || '');
+          addDiagnostic('sys', `Entering loop: ${event.name || `Loop ${event.loop}`}`);
           break;
 
         case 'forge:question':
           pendingQuestion.current = { id: event.id, question: event.content };
           pendingOptions.current = [];
+          addDiagnostic('sys', `Processing question: ${event.id}`);
           break;
 
         case 'forge:option': {
@@ -69,33 +77,38 @@ export function PresearchWizard() {
             }]);
             pendingQuestion.current = null;
             pendingOptions.current = [];
+            addDiagnostic('ok', 'Options ready for selection');
           }
           break;
 
         case 'forge:text-question':
-          setWaiting(false);
+          setThinking(false);
           setCards(prev => [...prev, { type: 'text', id: event.id, question: event.content }]);
+          addDiagnostic('sys', `Text input requested: ${event.id}`);
           break;
 
         case 'forge:decision':
-          setWaiting(false);
+          setThinking(false);
           setCards(prev => [...prev, { type: 'decision', summary: event.content }]);
+          addDiagnostic('ok', `Decision locked: ${event.content}`);
           break;
 
         case 'forge:registry':
-          setWaiting(false);
+          setThinking(false);
           if (event.requirements) {
-            setCards(prev => [...prev, { type: 'registry', requirements: event.requirements }]);
+            setRequirements(event.requirements);
+            addDiagnostic('ok', `Registry updated: ${event.requirements.length} requirements`);
           }
           break;
       }
     };
 
     window.forgeAPI.onForgeEvent(handleEvent);
-  }, []);
+  }, [addDiagnostic]);
 
   const handleSelect = useCallback((id, option) => {
-    setThinking(true); // Claude will process the response
+    setThinking(true);
+    addDiagnostic('log', `User selected: ${option.name}`);
     if (window.forgeAPI) {
       if (option.recommended) {
         window.forgeAPI.sendForgeResponse('select-recommended', { name: option.name });
@@ -105,50 +118,62 @@ export function PresearchWizard() {
         window.forgeAPI.sendForgeResponse('select-option', { name: option.name });
       }
     }
-  }, []);
+  }, [addDiagnostic]);
 
   const handleTextSubmit = useCallback((id, text) => {
     setThinking(true);
+    addDiagnostic('log', 'User submitted text response');
     if (window.forgeAPI) {
       window.forgeAPI.sendForgeResponse('custom-text', { text });
     }
-  }, []);
+  }, [addDiagnostic]);
 
   const handleRegistryConfirm = useCallback(() => {
     setThinking(true);
+    addDiagnostic('sys', 'Registry confirmed by user');
     if (window.forgeAPI) {
       window.forgeAPI.sendForgeResponse('confirm-registry', {});
     }
-  }, []);
+  }, [addDiagnostic]);
 
   return (
     <div className="presearch-wizard">
       <PresearchStepper currentLoop={currentLoop} completedLoops={completedLoops} />
-      <div className="presearch-wizard__cards">
-        {thinking && (
-          <div className="presearch-wizard__thinking">
-            <div className="presearch-wizard__spinner">●</div>
-            <p className="presearch-wizard__thinking-text">
-              {currentLoopName
-                ? `Claw'd is working on ${currentLoopName}...`
-                : "Claw'd is analyzing your project..."}
-            </p>
+
+      <div className="presearch-wizard__content">
+        {/* Left column: AI status + cards */}
+        <div className="presearch-wizard__left">
+          {thinking && (
+            <div className="presearch-wizard__thinking">
+              <span className="presearch-wizard__thinking-text">
+                {currentLoopName
+                  ? `AI Thinking: Working on ${currentLoopName}`
+                  : 'AI Thinking: Analyzing your project'}
+              </span>
+            </div>
+          )}
+
+          <div className="presearch-wizard__cards">
+            {cards.map((card, i) => {
+              switch (card.type) {
+                case 'question':
+                  return <QuestionCard key={i} id={card.id} question={card.question} options={card.options} onSelect={handleSelect} />;
+                case 'text':
+                  return <TextCard key={i} id={card.id} question={card.question} onSubmit={handleTextSubmit} />;
+                case 'decision':
+                  return <DecisionCard key={i} summary={card.summary} />;
+                default:
+                  return null;
+              }
+            })}
           </div>
-        )}
-        {cards.map((card, i) => {
-          switch (card.type) {
-            case 'question':
-              return <QuestionCard key={i} id={card.id} question={card.question} options={card.options} onSelect={handleSelect} />;
-            case 'text':
-              return <TextCard key={i} id={card.id} question={card.question} onSubmit={handleTextSubmit} />;
-            case 'decision':
-              return <DecisionCard key={i} summary={card.summary} />;
-            case 'registry':
-              return <RegistryCard key={i} requirements={card.requirements} onConfirm={handleRegistryConfirm} />;
-            default:
-              return null;
-          }
-        })}
+        </div>
+
+        {/* Right column: Requirements + Diagnostic */}
+        <div className="presearch-wizard__right">
+          <RequirementsPanel requirements={requirements} />
+          <DiagnosticFeed events={diagnosticEvents} />
+        </div>
       </div>
     </div>
   );

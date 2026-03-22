@@ -10,29 +10,35 @@ test('renders all 5 loop names', () => {
   expect(screen.getByText('Gap Analysis')).toBeTruthy();
 });
 
-test('marks current loop as active', () => {
+test('renders phase header and step count', () => {
+  render(<PresearchStepper currentLoop={3} completedLoops={[1, 2]} />);
+  expect(screen.getByText('System Initialization Phase')).toBeTruthy();
+  expect(screen.getByText('Step 03 / 05')).toBeTruthy();
+});
+
+test('marks current segment as active', () => {
   const { container } = render(<PresearchStepper currentLoop={2} completedLoops={[]} />);
-  const steps = container.querySelectorAll('.presearch-stepper__step');
-  expect(steps[1].classList.contains('presearch-stepper__step--active')).toBe(true);
+  const segments = container.querySelectorAll('.presearch-stepper__segment');
+  expect(segments[1].classList.contains('presearch-stepper__segment--active')).toBe(true);
 });
 
-test('marks completed loops with checkmark', () => {
+test('marks completed segments', () => {
   const { container } = render(<PresearchStepper currentLoop={3} completedLoops={[1, 2]} />);
-  const dots = container.querySelectorAll('.presearch-stepper__dot');
-  expect(dots[0].textContent).toBe('\u2713');
-  expect(dots[1].textContent).toBe('\u2713');
-  expect(dots[2].textContent).toBe('\u25CF');
+  const segments = container.querySelectorAll('.presearch-stepper__segment');
+  expect(segments[0].classList.contains('presearch-stepper__segment--complete')).toBe(true);
+  expect(segments[1].classList.contains('presearch-stepper__segment--complete')).toBe(true);
+  expect(segments[2].classList.contains('presearch-stepper__segment--active')).toBe(true);
 });
 
-test('does not mark non-active non-complete loops as active', () => {
+test('marks future segments', () => {
   const { container } = render(<PresearchStepper currentLoop={1} completedLoops={[]} />);
-  const steps = container.querySelectorAll('.presearch-stepper__step');
-  expect(steps[2].classList.contains('presearch-stepper__step--active')).toBe(false);
-  expect(steps[2].classList.contains('presearch-stepper__step--complete')).toBe(false);
+  const segments = container.querySelectorAll('.presearch-stepper__segment');
+  expect(segments[3].classList.contains('presearch-stepper__segment--future')).toBe(true);
+  expect(segments[4].classList.contains('presearch-stepper__segment--future')).toBe(true);
 });
 
-test('pending loops show empty circle', () => {
-  const { container } = render(<PresearchStepper currentLoop={1} completedLoops={[]} />);
-  const dots = container.querySelectorAll('.presearch-stepper__dot');
-  expect(dots[4].textContent).toBe('\u25CB');
+test('active label gets active class', () => {
+  const { container } = render(<PresearchStepper currentLoop={2} completedLoops={[]} />);
+  const labels = container.querySelectorAll('.presearch-stepper__label');
+  expect(labels[1].classList.contains('presearch-stepper__label--active')).toBe(true);
 });

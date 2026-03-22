@@ -1,6 +1,4 @@
 import { useState } from 'preact/hooks';
-import { Card } from '../shared/Card';
-import { Button } from '../shared/Button';
 import './TextCard.css';
 
 export function TextCard({ id, question, onSubmit }) {
@@ -20,7 +18,7 @@ export function TextCard({ id, question, onSubmit }) {
   };
 
   return (
-    <Card className="text-card">
+    <div className="text-card">
       <h3 className="text-card__title">{question}</h3>
       <textarea
         className="text-card__input"
@@ -30,7 +28,13 @@ export function TextCard({ id, question, onSubmit }) {
         onInput={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
       />
-      <Button onClick={handleSubmit} disabled={!text.trim()}>Submit</Button>
-    </Card>
+      <button
+        className="text-card__submit"
+        onClick={handleSubmit}
+        disabled={!text.trim()}
+      >
+        Submit Response
+      </button>
+    </div>
   );
 }

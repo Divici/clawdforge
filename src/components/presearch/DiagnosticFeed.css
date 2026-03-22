@@ -1,0 +1,41 @@
+.diagnostic-feed__heading {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-outline);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.diagnostic-feed__list {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-outline);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.diagnostic-feed__entry {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.diagnostic-feed__prefix {
+  font-weight: 500;
+}
+
+.diagnostic-feed__prefix--sys {
+  color: var(--color-primary);
+}
+
+.diagnostic-feed__prefix--ok {
+  color: var(--color-tertiary);
+}
+
+.diagnostic-feed__prefix--log {
+  color: var(--color-outline-variant);
+}

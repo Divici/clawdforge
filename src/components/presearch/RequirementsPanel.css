@@ -1,0 +1,74 @@
+.requirements-panel__heading {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-outline);
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.requirements-panel__dot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.requirements-panel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--color-surface-low);
+  padding: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(85, 67, 61, 0.1);
+}
+
+.requirements-panel__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.requirements-panel__check {
+  font-size: 14px;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.requirements-panel__check--done {
+  color: var(--color-primary);
+}
+
+.requirements-panel__check--pending {
+  color: var(--color-outline-variant);
+}
+
+.requirements-panel__text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.requirements-panel__name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  margin: 0;
+}
+
+.requirements-panel__name--pending {
+  color: var(--color-outline);
+}
+
+.requirements-panel__status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-outline);
+  margin: 0;
+}

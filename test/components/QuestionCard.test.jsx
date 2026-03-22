@@ -11,25 +11,25 @@ test('renders question text', () => {
   expect(screen.getByText('What database?')).toBeTruthy();
 });
 
-test('shows recommended badge on recommended option', () => {
+test('shows recommended banner on recommended option', () => {
   render(<QuestionCard id="q1" question="What database?" options={mockOptions} onSelect={() => {}} />);
-  expect(screen.getByText('\u2605 Recommended')).toBeTruthy();
+  expect(screen.getByText('Recommended Architecture')).toBeTruthy();
 });
 
 test('shows pros and cons for expanded option', () => {
   render(<QuestionCard id="q1" question="What database?" options={mockOptions} onSelect={() => {}} />);
-  expect(screen.getByText('\u2713 Zero config')).toBeTruthy();
-  expect(screen.getByText('\u2717 No concurrent writes')).toBeTruthy();
+  expect(screen.getByText('Zero config')).toBeTruthy();
+  expect(screen.getByText('No concurrent writes')).toBeTruthy();
 });
 
-test('calls onSelect when Select button clicked', () => {
+test('calls onSelect when select button clicked', () => {
   const onSelect = vi.fn();
   render(<QuestionCard id="q1" question="What database?" options={mockOptions} onSelect={onSelect} />);
-  fireEvent.click(screen.getByText('Select'));
+  fireEvent.click(screen.getByText('Select This Option'));
   expect(onSelect).toHaveBeenCalledWith('q1', mockOptions[0]);
 });
 
-test('shows Other... option', () => {
+test('shows Other... option collapsed', () => {
   render(<QuestionCard id="q1" question="What database?" options={mockOptions} onSelect={() => {}} />);
   expect(screen.getByText('Other...')).toBeTruthy();
 });
@@ -40,16 +40,22 @@ test('expands other option and allows custom input', () => {
   fireEvent.click(screen.getByText('Other...'));
   const input = screen.getByPlaceholderText('Type your answer...');
   fireEvent.input(input, { target: { value: 'MongoDB' } });
-  fireEvent.click(screen.getAllByText('Select')[0]);
+  fireEvent.click(screen.getByText('Submit Custom Response'));
   expect(onSelect).toHaveBeenCalledWith('q1', { name: 'MongoDB', custom: true });
 });
 
 test('expanding another option collapses current', () => {
   render(<QuestionCard id="q1" question="What database?" options={mockOptions} onSelect={() => {}} />);
   // Initially SQLite (recommended) is expanded
-  expect(screen.getByText('\u2713 Zero config')).toBeTruthy();
-  // Click PostgreSQL
+  expect(screen.getByText('Zero config')).toBeTruthy();
+  // Click PostgreSQL collapsed row
   fireEvent.click(screen.getByText('PostgreSQL'));
-  expect(screen.getByText('\u2713 Mature')).toBeTruthy();
-  expect(screen.queryByText('\u2713 Zero config')).toBeNull();
+  expect(screen.getByText('Mature')).toBeTruthy();
+  expect(screen.queryByText('Zero config')).toBeNull();
+});
+
+test('renders collapsed options with number prefix', () => {
+  render(<QuestionCard id="q1" question="What database?" options={mockOptions} onSelect={() => {}} />);
+  // PostgreSQL is collapsed, should show number "02"
+  expect(screen.getByText('02')).toBeTruthy();
 });
