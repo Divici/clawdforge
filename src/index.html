@@ -3,105 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Matrix Forge Command Deck</title>
-  <link rel="stylesheet" href="../node_modules/@xterm/xterm/css/xterm.css">
-  <link rel="stylesheet" href="styles/deck.css">
+  <title>Claw'd Forge</title>
 </head>
 <body>
-  <!-- Launch Dialog Overlay -->
-  <div id="launch-overlay" class="launch-overlay">
-    <div class="launch-dialog">
-      <h1 class="launch-title">MATRIX FORGE</h1>
-      <p class="launch-subtitle">Command Deck</p>
-      <div class="launch-separator">· · · · · · · · · · · · · · · · · · · ·</div>
-
-      <!-- Step 1: Select project directory -->
-      <label class="launch-label">Project directory</label>
-      <div class="dir-picker">
-        <span class="dir-path" id="dir-path">No directory selected</span>
-        <button id="browse-btn" class="launch-btn launch-btn-small">BROWSE</button>
-      </div>
-
-      <!-- PRD detection status -->
-      <div id="prd-status" class="prd-status hidden">
-        <span class="prd-icon">✓</span>
-        <span id="prd-name" class="prd-name"></span>
-      </div>
-      <div id="prd-none" class="prd-status prd-none hidden">
-        <span class="prd-icon prd-warn">!</span>
-        <span class="prd-name">No PRD found — workflow will ask for details</span>
-      </div>
-
-      <div class="launch-separator">· · · · · · · · · · · · · · · · · · · ·</div>
-
-      <!-- Step 2: Optional description -->
-      <label class="launch-label" for="prompt-input">Additional context (optional)</label>
-      <textarea id="prompt-input" class="launch-input" rows="3" placeholder="Any extra instructions for the workflow..."></textarea>
-
-      <button id="start-btn" class="launch-btn" disabled>START FORGE</button>
-    </div>
-  </div>
-
-  <!-- Main 3-Panel Layout -->
-  <div id="app" class="app-container hidden">
-    <!-- Left Panel: Status -->
-    <aside id="status-panel" class="panel panel-left">
-      <h2 class="panel-title">MATRIX FORGE</h2>
-      <div class="separator">· · · · · · · · · · · · ·</div>
-      <div class="status-fields">
-        <div class="status-field">
-          <span class="status-label">PROJECT</span>
-          <span class="status-value" id="status-project">—</span>
-        </div>
-        <div class="status-field">
-          <span class="status-label">MODE</span>
-          <span class="status-value" id="status-mode">idle</span>
-        </div>
-        <div class="status-field">
-          <span class="status-label">PHASE</span>
-          <span class="status-value" id="status-phase">—</span>
-        </div>
-        <div class="status-field">
-          <span class="status-label">ELAPSED</span>
-          <span class="status-value" id="status-elapsed">00:00</span>
-        </div>
-        <div class="separator">· · · · · · · · · · · · ·</div>
-        <div class="status-field">
-          <span class="status-label">AGENTS</span>
-          <span class="status-value" id="status-agents">0</span>
-        </div>
-        <div class="status-field">
-          <span class="status-label">DECISIONS</span>
-          <span class="status-value" id="status-decisions">0</span>
-        </div>
-        <div class="status-field">
-          <span class="status-label">ARTIFACTS</span>
-          <span class="status-value" id="status-artifacts">0</span>
-        </div>
-        <div class="separator">· · · · · · · · · · · · ·</div>
-        <div class="status-field">
-          <span class="status-label">WARNINGS</span>
-          <span class="status-value status-warning" id="status-warnings">0</span>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Center Panel: Forge Canvas -->
-    <main id="forge-panel" class="panel panel-center">
-      <canvas id="forge-canvas"></canvas>
-    </main>
-
-    <!-- Right Panel: Terminal -->
-    <section id="terminal-panel" class="panel panel-right">
-      <div id="terminal-container"></div>
-    </section>
-
-    <!-- CRT Overlay -->
-    <div class="crt-overlay"></div>
-  </div>
-
-  <script type="module" src="panels/terminal-panel.js"></script>
-  <script type="module" src="panels/status-panel.js"></script>
-  <script type="module" src="panels/forge-panel.js"></script>
+  <div id="root"></div>
+  <script type="module" src="./main.jsx"></script>
 </body>
 </html>
