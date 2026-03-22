@@ -1,0 +1,74 @@
+.phase-stepper {
+  padding: 16px 20px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-tan-dim);
+}
+
+.phase-stepper__phases {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+}
+
+.phase-stepper__phase {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.phase-stepper__line {
+  width: 32px;
+  height: 2px;
+  background: var(--color-tan-dim);
+  margin: 0 4px;
+}
+
+.phase-stepper__line--active {
+  background: var(--color-primary);
+}
+
+.phase-stepper__dot {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 14px;
+  color: var(--color-tan-dim);
+  border: 2px solid var(--color-tan-dim);
+  flex-shrink: 0;
+}
+
+.phase-stepper__dot--active {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.phase-stepper__dot--complete {
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.phase-stepper__name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-cream);
+}
+
+.phase-stepper__status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-tan);
+  font-style: italic;
+}
+
+.phase-stepper__stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-tan-dim);
+}
