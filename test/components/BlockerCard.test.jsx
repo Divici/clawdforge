@@ -1,9 +1,9 @@
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { BlockerCard } from '../../src/components/build/BlockerCard';
 
-test('renders blocker title', () => {
+test('renders intervention required label', () => {
   render(<BlockerCard title="API key required" description="Need key" />);
-  expect(screen.getByText('API key required')).toBeTruthy();
+  expect(screen.getByText('Intervention Required')).toBeTruthy();
 });
 
 test('renders description', () => {
@@ -11,17 +11,22 @@ test('renders description', () => {
   expect(screen.getByText('Missing credentials')).toBeTruthy();
 });
 
-test('shows skip mock button and fires callback', () => {
+test('renders error code when provided', () => {
+  render(<BlockerCard title="Blocker" description="desc" errorCode="ERR_042" />);
+  expect(screen.getByText('ERR_042')).toBeTruthy();
+});
+
+test('shows resolve now button and fires callback', () => {
   const onSkipMock = vi.fn();
   render(<BlockerCard title="Blocker" description="desc" onSkipMock={onSkipMock} />);
-  fireEvent.click(screen.getByText('Skip & Use Mock'));
+  fireEvent.click(screen.getByText('Resolve Now'));
   expect(onSkipMock).toHaveBeenCalled();
 });
 
-test('shows skip button and fires callback', () => {
+test('shows ignore task button and fires callback', () => {
   const onSkip = vi.fn();
   render(<BlockerCard title="Blocker" description="desc" onSkip={onSkip} />);
-  fireEvent.click(screen.getByText('Skip for Now'));
+  fireEvent.click(screen.getByText('Ignore Task'));
   expect(onSkip).toHaveBeenCalled();
 });
 

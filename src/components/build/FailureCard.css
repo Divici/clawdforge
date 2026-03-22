@@ -1,37 +1,63 @@
+/* FailureCard — Stitch: red-tinted alert, same pattern as BlockerCard */
 .failure-card {
-  border-left: 3px solid var(--color-error);
+  background: rgba(42, 18, 18, 0.3);
+  border: 1px solid rgba(255, 180, 171, 0.2);
+  border-radius: 0;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  box-shadow: 0 0 15px rgba(217, 119, 87, 0.05);
+}
+
+.failure-card__icon {
+  font-size: 18px;
+  color: var(--color-error);
+  font-weight: bold;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.failure-card__content {
+  flex: 1;
 }
 
 .failure-card__header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  margin-bottom: 4px;
 }
 
-.failure-card__icon {
-  font-size: 16px;
+.failure-card__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--color-error);
-  font-weight: bold;
+  font-weight: 700;
 }
 
 .failure-card__title {
   font-family: var(--font-mono);
   font-size: 13px;
-  color: var(--color-cream);
+  color: var(--color-on-surface);
   font-weight: bold;
+  display: block;
+  margin-bottom: 4px;
 }
 
 .failure-card__desc {
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--color-tan);
-  margin: 8px 0;
+  color: var(--color-on-surface-variant);
+  margin: 0 0 8px;
 }
 
 .failure-card__error {
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--color-tan);
+  color: var(--color-on-surface-variant);
   cursor: pointer;
   margin: 8px 0;
 }
@@ -40,7 +66,7 @@
   margin: 8px 0;
   padding: 8px;
   background: var(--color-bg);
-  border-radius: 4px;
+  border-radius: 0;
   font-size: 11px;
   color: var(--color-error);
   overflow-x: auto;
@@ -49,6 +75,36 @@
 
 .failure-card__actions {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.failure-card__btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.failure-card__btn--resolve {
+  background: rgba(255, 180, 171, 0.1);
+  color: var(--color-error);
+}
+
+.failure-card__btn--resolve:hover {
+  background: rgba(255, 180, 171, 0.2);
+}
+
+.failure-card__btn--ghost {
+  background: transparent;
+  color: rgba(219, 193, 185, 0.6);
+}
+
+.failure-card__btn--ghost:hover {
+  color: var(--color-on-surface-variant);
 }

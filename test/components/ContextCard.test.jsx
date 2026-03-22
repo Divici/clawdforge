@@ -1,7 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { ContextCard } from '../../src/components/build/ContextCard';
 
-test('renders context warning title', () => {
+test('renders context limit warning label', () => {
+  render(<ContextCard phase="auth" taskProgress="4/6 tasks" onResume={() => {}} />);
+  expect(screen.getByText('Context Limit Warning')).toBeTruthy();
+});
+
+test('renders context reaching limit description', () => {
   render(<ContextCard phase="auth" taskProgress="4/6 tasks" onResume={() => {}} />);
   expect(screen.getByText(/Context reaching limit/)).toBeTruthy();
 });
