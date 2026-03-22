@@ -1,54 +1,20 @@
 const pty = require('node-pty');
 const path = require('path');
 
-// Forge Output Protocol preamble — injected as Claude's first message
-// so it knows to emit structured markers for the dashboard UI.
-const FORGE_PREAMBLE = `You are running inside Claw'd Forge, a visual dashboard. You MUST emit structured [FORGE:] markers on their own line throughout your output so the dashboard can render interactive UI cards. This is critical — without markers, the user sees nothing.
-
-MARKER FORMAT: [FORGE:TYPE key=value] content
-
-REQUIRED MARKERS — emit these at the appropriate times:
-
-When presenting a question with options:
-[FORGE:QUESTION id=q1] Question text
-[FORGE:OPTION id=q1 recommended=true] OptionName | ✓ pro | ✗ con | Best when: context
-[FORGE:OPTION id=q1] OptionName | ✓ pro | ✗ con | Best when: context
-[FORGE:OPTION_END id=q1]
-
-For open-ended questions (no predefined options):
-[FORGE:TEXT_QUESTION id=q2] Question text
-
-When a decision is locked:
-[FORGE:DECISION] Summary of the locked decision
-
-For requirements registry:
-[FORGE:REGISTRY] [{"id":"R-001","text":"description","priority":"Must-have"}]
-
-Loop/phase transitions:
-[FORGE:LOOP loop=1 name=Constraints]
-[FORGE:MODE mode=presearch]
-[FORGE:MODE mode=build]
-[FORGE:PHASE phase=scaffold total=5 current=1]
-
-During build:
-[FORGE:TASK status=complete] commit message
-[FORGE:AGENT_SPAWN count=3]
-[FORGE:AGENT_DONE count=2]
-[FORGE:BLOCKER type=api-key] Description
-[FORGE:COMPLETE] {"tests":127,"phases":5}
-
-RULES:
-- Emit markers IN ADDITION to your normal output, not instead of it
-- Each marker goes on its own line
-- Increment question ids: q1, q2, q3...
-- For OPTION: separate name, pros (✓), cons (✗), and "Best when:" with pipe |
-- Set recommended=true on your recommended option
-- ALWAYS emit OPTION_END after listing all options for a question
-- For REGISTRY: content is a JSON array
-- Emit LOOP marker at each presearch loop transition
-- Emit MODE marker when switching between presearch and build
-
-Now run the workflow. /workflow`;
+// Short forge protocol preamble — sent before /workflow
+// Kept minimal so Claude processes it quickly
+const FORGE_PREAMBLE = [
+  'IMPORTANT: You are inside Claw\'d Forge dashboard. Emit [FORGE:] markers on their own line so the UI renders cards.',
+  'Format: [FORGE:TYPE key=value] content',
+  'Questions: [FORGE:QUESTION id=q1] text, then [FORGE:OPTION id=q1 recommended=true] Name | ✓ pro | ✗ con | Best when: x, then [FORGE:OPTION_END id=q1]',
+  'Text input: [FORGE:TEXT_QUESTION id=q1] text',
+  'Decisions: [FORGE:DECISION] summary',
+  'Registry: [FORGE:REGISTRY] [{json array}]',
+  'Loops: [FORGE:LOOP loop=1 name=Constraints]',
+  'Modes: [FORGE:MODE mode=presearch] or [FORGE:MODE mode=build]',
+  'Build: [FORGE:PHASE phase=name total=N current=M], [FORGE:TASK status=complete] msg, [FORGE:AGENT_SPAWN count=N], [FORGE:AGENT_DONE count=N], [FORGE:COMPLETE] {json}',
+  'Emit markers IN ADDITION to normal output. Without them the user sees nothing.',
+].join(' ');
 
 class ClaudeRunner {
   constructor(bus) {
@@ -76,37 +42,38 @@ class ClaudeRunner {
       env: this._buildEnv(),
     });
 
-    // Watch output for Claude's ready signal, then send forge preamble + /workflow
-    let claudeSent = false;
-    let preambleSent = false;
+    let step = 0; // 0=waiting for shell, 1=claude sent, 2=preamble sent, 3=workflow sent
     let buffer = '';
 
     this.ptyProcess.onData((data) => {
       if (onData) onData(data);
 
-      if (!claudeSent || !preambleSent) {
-        buffer += data;
+      if (step >= 3) return; // All commands sent
+      buffer += data;
 
-        // Send claude command after shell prompt appears
-        if (!claudeSent && buffer.length > 50) {
-          claudeSent = true;
+      // Step 0 -> 1: Send claude command once shell prompt appears
+      if (step === 0 && buffer.length > 50) {
+        step = 1;
+        setTimeout(() => {
+          this.ptyProcess.write('claude --dangerously-skip-permissions\r');
+        }, 500);
+      }
+
+      // Step 1 -> 2: Wait for Claude CLI ready, send short preamble
+      if (step === 1 && buffer.length > 500) {
+        // Look for Claude CLI ready signals
+        const stripped = buffer.replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '');
+        if (stripped.includes('Tips') || stripped.includes('Claude Code') || stripped.includes('claude-code') || stripped.includes('\n> ')) {
+          step = 2;
           setTimeout(() => {
-            this.ptyProcess.write(`claude --dangerously-skip-permissions\r`);
-          }, 300);
-        }
+            this.ptyProcess.write(FORGE_PREAMBLE + '\r');
+          }, 1500);
 
-        // Wait for Claude CLI to be ready, then send forge preamble + /workflow
-        if (claudeSent && !preambleSent) {
-          if (buffer.includes('\\') || buffer.includes('>') || buffer.includes('Human:') || buffer.includes('claude-code') || buffer.includes('Tips')) {
-            const timeSinceClaude = buffer.length;
-            if (timeSinceClaude > 500) {
-              preambleSent = true;
-              setTimeout(() => {
-                // Send the forge preamble which ends with /workflow
-                this.ptyProcess.write(FORGE_PREAMBLE + '\r');
-              }, 1000);
-            }
-          }
+          // Step 2 -> 3: Send /workflow after preamble is processed
+          setTimeout(() => {
+            step = 3;
+            this.ptyProcess.write('/workflow\r');
+          }, 4000);
         }
       }
     });
