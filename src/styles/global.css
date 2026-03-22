@@ -1,0 +1,38 @@
+@import './theme.css';
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Base */
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-cream);
+  font-family: var(--font-mono);
+}
+
+#root {
+  height: 100%;
+}
+
+/* 2-zone layout */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.app-layout__dashboard {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.app-layout__stage {
+  height: 180px;
+  flex-shrink: 0;
+}
