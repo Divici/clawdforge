@@ -1,6 +1,7 @@
 const pty = require('node-pty');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 // Forge protocol instructions written as a rules file in the target project.
 // Claude CLI reads .claude/rules/*.md on startup — this persists through
@@ -89,32 +90,50 @@ class ClaudeRunner {
   }
 
   /**
-   * Write the forge protocol rules file into the target project's .claude/rules/ dir.
-   * Claude CLI reads these automatically on startup.
+   * Write the forge protocol rules file into BOTH:
+   * 1. Global ~/.claude/rules/ (guaranteed to be read by Claude CLI)
+   * 2. Target project's .claude/rules/ (project-local, may or may not be read)
    */
   _installForgeRules(projectDir) {
-    const rulesDir = path.join(projectDir, '.claude', 'rules');
+    this._rulesPaths = [];
+
+    // Global rules dir — this is where the user's other rules live
+    // (commit-message.md, tdd.md, etc.) so we know Claude reads it
+    const globalRulesDir = path.join(os.homedir(), '.claude', 'rules');
     try {
-      fs.mkdirSync(rulesDir, { recursive: true });
-      this._rulesPath = path.join(rulesDir, RULES_FILENAME);
-      fs.writeFileSync(this._rulesPath, FORGE_PROTOCOL_RULES, 'utf-8');
+      fs.mkdirSync(globalRulesDir, { recursive: true });
+      const globalPath = path.join(globalRulesDir, RULES_FILENAME);
+      fs.writeFileSync(globalPath, FORGE_PROTOCOL_RULES, 'utf-8');
+      this._rulesPaths.push(globalPath);
     } catch (err) {
-      console.error('Failed to write forge rules:', err.message);
-      this._rulesPath = null;
+      console.error('Failed to write global forge rules:', err.message);
+    }
+
+    // Project-local rules dir — belt and suspenders
+    const localRulesDir = path.join(projectDir, '.claude', 'rules');
+    try {
+      fs.mkdirSync(localRulesDir, { recursive: true });
+      const localPath = path.join(localRulesDir, RULES_FILENAME);
+      fs.writeFileSync(localPath, FORGE_PROTOCOL_RULES, 'utf-8');
+      this._rulesPaths.push(localPath);
+    } catch (err) {
+      // Not critical — global rules are the primary mechanism
     }
   }
 
   /**
-   * Remove the forge protocol rules file after Claude exits.
+   * Remove all forge protocol rules files after Claude exits.
    */
   _removeForgeRules() {
-    if (this._rulesPath) {
-      try {
-        fs.unlinkSync(this._rulesPath);
-      } catch {
-        // Ignore — file may already be gone
+    if (this._rulesPaths) {
+      for (const p of this._rulesPaths) {
+        try {
+          fs.unlinkSync(p);
+        } catch {
+          // Ignore — file may already be gone
+        }
       }
-      this._rulesPath = null;
+      this._rulesPaths = [];
     }
   }
 
