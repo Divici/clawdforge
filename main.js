@@ -1,14 +1,17 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { ForgeBus } = require('./src/bridge/event-bus');
+const { ForgeBus, FORGE_EVENTS_V2 } = require('./src/bridge/event-bus');
 const { StageParser } = require('./src/bridge/stage-parser');
 const { ClaudeRunner } = require('./src/bridge/claude-runner');
+const { ForgeLog } = require('./src/bridge/forge-log');
+const { translateAction } = require('./src/bridge/stdin-translator');
 
 let mainWindow;
 const bus = new ForgeBus();
 const parser = new StageParser(bus);
 let runner = null;
+let forgeLog = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -43,18 +46,14 @@ function createWindow() {
   mainWindow.setMenuBarVisibility(false);
 }
 
-// Forward parsed events to renderer
-const FORGE_EVENTS = [
-  'mode:change',
-  'stage:change',
-  'agent:spawn',
-  'agent:done',
-  'decision:lock',
-  'artifact:create',
-  'warning',
+// Forward v1 + v2 events to renderer
+const ALL_FORGE_EVENTS = [
+  'mode:change', 'stage:change', 'agent:spawn', 'agent:done',
+  'decision:lock', 'artifact:create', 'warning',
+  ...FORGE_EVENTS_V2,
 ];
 
-for (const event of FORGE_EVENTS) {
+for (const event of ALL_FORGE_EVENTS) {
   bus.on(event, (payload) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('forge:event', { type: event, ...payload });
@@ -110,12 +109,29 @@ ipcMain.on('claude:spawn', (_event, config) => {
   }
   runner = new ClaudeRunner(bus);
   runner.spawn({ projectDir, prompt, prdFile }, (data) => {
-    // Feed to stage parser
+    // Feed to stage parser only — no raw terminal output to renderer (R-027)
     parser.feed(data);
-    // Forward raw data to terminal
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('terminal:data', data);
-    }
+  });
+
+  // Initialize forge log
+  forgeLog = new ForgeLog(projectDir);
+  forgeLog.load();
+  forgeLog._data.projectName = projectDir.split(/[/\\]/).pop();
+  forgeLog._data.startTime = new Date().toISOString();
+  forgeLog.save();
+
+  // Wire forge events to log persistence
+  bus.on('forge:decision', (payload) => {
+    if (forgeLog) forgeLog.addPresearchDecision(payload);
+  });
+  bus.on('forge:task', (payload) => {
+    if (forgeLog) forgeLog.addBuildCard({ type: 'task', ...payload, timestamp: new Date().toISOString() });
+  });
+  bus.on('forge:phase', (payload) => {
+    if (forgeLog) forgeLog.updatePhase(payload.phase, payload.current, payload.total, payload.phaseNames);
+  });
+  bus.on('forge:mode', (payload) => {
+    if (forgeLog) forgeLog.updateMode(payload.mode);
   });
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('claude:spawn', { pid: runner.ptyProcess?.pid });
@@ -134,6 +150,19 @@ ipcMain.on('terminal:resize', (_event, { cols, rows }) => {
   if (runner) {
     runner.resize(cols, rows);
   }
+});
+
+// IPC: forge respond (dashboard card interaction -> stdin)
+ipcMain.on('forge:respond', (_event, { action, payload }) => {
+  if (!runner) return;
+  const text = translateAction(action, payload);
+  runner.write(text + '\r');
+});
+
+// IPC: load forge log for resume
+ipcMain.handle('forge:load-log', async (_event, projectDir) => {
+  const log = new ForgeLog(projectDir);
+  return log.load();
 });
 
 app.whenReady().then(() => {
