@@ -6,70 +6,21 @@ const os = require('os');
 // Forge protocol instructions written as a rules file in the target project.
 // Claude CLI reads .claude/rules/*.md on startup — this persists through
 // all skill invocations including /workflow, /presearch, /build.
-const FORGE_PROTOCOL_RULES = `# Forge Output Protocol
-
-You are running inside Claw'd Forge, a visual dashboard app. You MUST emit structured markers so the dashboard can render UI cards. Without these markers, the user sees a blank screen.
-
-## Marker Format
-
-Each marker goes on its own line: \`[FORGE:TYPE key=value] content\`
-
-## When Presenting a Decision with Options
-
-\`\`\`
-[FORGE:QUESTION id=q1] What database should we use?
-[FORGE:OPTION id=q1 recommended=true] SQLite | ✓ Zero config, embedded | ✓ Perfect for single-user | ✗ No concurrent writes | Best when: single user, local-first
-[FORGE:OPTION id=q1] PostgreSQL | ✓ Mature, relational | ✗ Requires server setup | Best when: complex queries
+const FORGE_PROTOCOL_RULES = `Emit [FORGE:TYPE key=value] markers on their own line, in addition to normal output.
+[FORGE:QUESTION id=q1] What database?
+[FORGE:OPTION id=q1 recommended=true] SQLite | ✓ Zero config | ✗ No concurrent writes | Best when: local
+[FORGE:OPTION id=q1] PostgreSQL | ✓ Mature | ✗ Needs server | Best when: complex queries
 [FORGE:OPTION_END id=q1]
-\`\`\`
-
-Increment question ids: q1, q2, q3. Set \`recommended=true\` on your pick. Separate name, pros (✓), cons (✗), "Best when:" with \`|\`.
-
-## When Asking an Open-Ended Question
-
-\`\`\`
-[FORGE:TEXT_QUESTION id=q1] What is your timeline?
-\`\`\`
-
-## When Locking a Decision
-
-\`\`\`
-[FORGE:DECISION] Database: SQLite — embedded, zero config
-\`\`\`
-
-## Requirements Registry
-
-\`\`\`
-[FORGE:REGISTRY] [{"id":"R-001","text":"Shorten a URL","priority":"Must-have"},{"id":"R-002","text":"Redirect","priority":"Must-have"}]
-\`\`\`
-
-## Loop and Mode Transitions
-
-\`\`\`
+[FORGE:TEXT_QUESTION id=q2] What is your timeline?
+[FORGE:DECISION] Database: SQLite
+[FORGE:REGISTRY] [{"id":"R-001","text":"desc","priority":"Must-have"}]
 [FORGE:LOOP loop=1 name=Constraints]
-[FORGE:MODE mode=presearch]
 [FORGE:MODE mode=build]
-\`\`\`
-
-## During Build
-
-\`\`\`
 [FORGE:PHASE phase=scaffold total=5 current=1]
-[FORGE:TASK status=complete] feat(db): add user model
+[FORGE:TASK status=complete] commit message
 [FORGE:AGENT_SPAWN count=3]
 [FORGE:AGENT_DONE count=2]
-[FORGE:BLOCKER type=api-key] Need OpenAI API key
-[FORGE:COMPLETE] {"tests":127,"phases":5}
-\`\`\`
-
-## Rules
-
-- Emit markers IN ADDITION to your normal output, not instead of it
-- Each marker MUST be on its own line
-- ALWAYS emit OPTION_END after listing all options
-- For REGISTRY, content is a JSON array
-- Emit LOOP at each presearch loop transition
-- Emit MODE when switching between presearch and build
+[FORGE:COMPLETE] {"tests":127}
 `;
 
 const RULES_FILENAME = 'forge-protocol.md';
