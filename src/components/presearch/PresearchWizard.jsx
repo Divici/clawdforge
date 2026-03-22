@@ -17,6 +17,7 @@ export function PresearchWizard() {
   const [diagnosticEvents, setDiagnosticEvents] = useState([]);
   const pendingQuestion = useRef(null);
   const pendingOptions = useRef([]);
+  const seenQuestions = useRef(new Set());
 
   const addDiagnostic = useCallback((level, message) => {
     setDiagnosticEvents(prev => [...prev, { level, message }]);
@@ -82,37 +83,39 @@ export function PresearchWizard() {
 
         case 'forge:option-end':
           if (pendingQuestion.current) {
-            setThinking(false);
-            setCards(prev => [...prev, {
-              type: 'question',
-              id: pendingQuestion.current.id,
-              question: pendingQuestion.current.question,
-              options: [...pendingOptions.current],
-            }]);
+            const qText = pendingQuestion.current.question;
+            // Skip duplicate questions (Claude re-asks across loops)
+            if (!seenQuestions.current.has(qText)) {
+              seenQuestions.current.add(qText);
+              setThinking(false);
+              setCards(prev => [...prev, {
+                type: 'question',
+                id: pendingQuestion.current.id,
+                question: qText,
+                options: [...pendingOptions.current],
+              }]);
+            }
             pendingQuestion.current = null;
             pendingOptions.current = [];
             addDiagnostic('ok', 'Options ready for selection');
           }
           break;
 
-        case 'forge:text-question':
-          setThinking(false);
-          setCards(prev => [...prev, { type: 'text', id: event.id, question: event.content }]);
+        case 'forge:text-question': {
+          const tqText = event.content || '';
+          if (!seenQuestions.current.has(tqText)) {
+            seenQuestions.current.add(tqText);
+            setThinking(false);
+            setCards(prev => [...prev, { type: 'text', id: event.id, question: tqText }]);
+          }
           addDiagnostic('sys', `Text input requested: ${event.id}`);
           break;
+        }
 
         case 'forge:decision': {
-          // Skip if this decision echoes an already-answered question card
+          // Don't add standalone decision cards — answered questions already
+          // show as DecisionCards. Claude's forge:decision events are echoes.
           const content = event.content || '';
-          setCards(prev => {
-            const alreadyAnswered = prev.some(c =>
-              c.answered && content.includes(c.selectedOption)
-            );
-            if (alreadyAnswered) return prev;
-            return [...prev, { type: 'decision', summary: content }];
-          });
-          // Don't set thinking=false here — decisions alone shouldn't hide the thinking bar.
-          // It stays on until a question/text card actually arrives for the user to interact with.
           addDiagnostic('ok', `Decision locked: ${content}`);
           break;
         }
