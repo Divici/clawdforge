@@ -1,12 +1,13 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 
 export default defineConfig({
   plugins: [preact()],
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    include: ['test/**/*.test.{js,jsx}'],
+  root: 'src',
+  base: './',
+  build: {
+    outDir: '../dist-renderer',
+    emptyOutDir: true,
   },
   resolve: {
     alias: {

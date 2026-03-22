@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(chmod +x \"c:/Users/doa92/Desktop/Gauntlet Projects/matrixForge/.claude/hooks/protect-env.sh\" \"c:/Users/doa92/Desktop/Gauntlet Projects/matrixForge/.claude/hooks/block-destructive-git.sh\")",
+      "Bash(npx vitest:*)"
+    ]
+  }
+}

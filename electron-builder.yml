@@ -1,12 +1,13 @@
-appId: com.matrixforge.commanddeck
-productName: Matrix Forge
+appId: com.clawdforge.dashboard
+productName: Claw'd Forge
 directories:
   output: dist
 files:
   - main.js
   - launch.js
   - preload.js
-  - src/**/*
+  - src/bridge/**/*
+  - dist-renderer/**/*
   - node_modules/**/*
   - "!node_modules/**/*.md"
   - "!node_modules/**/*.map"

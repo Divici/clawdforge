@@ -3,4 +3,4 @@ dist/
 out/
 STUDY_GUIDE.md
 WORKFLOW_STATE.md
-dist/
+forge-log.json
