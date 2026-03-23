@@ -41,16 +41,28 @@ class ClaudeRunner {
     this.sessionId = null;
   }
 
-  _buildArgs(prompt) {
-    const args = [];
-    if (prompt) {
-      args.push('-p', prompt);
-    }
-    args.push('--input-format', 'stream-json');
-    args.push('--output-format', 'stream-json');
-    args.push('--verbose');
-    args.push('--dangerously-skip-permissions');
-    return args;
+  _buildArgs() {
+    return [
+      '--input-format', 'stream-json',
+      '--output-format', 'stream-json',
+      '--verbose',
+      '--dangerously-skip-permissions',
+    ];
+  }
+
+  /**
+   * Write a user message to the child's stdin as stream-json.
+   */
+  _writeUserMessage(text) {
+    if (!this._child || !this._child.stdin || this._child.stdin.destroyed) return;
+    const message = JSON.stringify({
+      type: 'user',
+      message: {
+        role: 'user',
+        content: [{ type: 'text', text }],
+      },
+    });
+    this._child.stdin.write(message + '\n');
   }
 
   _buildEnv() {
@@ -209,7 +221,7 @@ class ClaudeRunner {
 
     this._installForgeRules(projectDir);
 
-    const args = this._buildArgs(prompt || 'Run the /workflow skill');
+    const args = this._buildArgs();
     const child = childProcess.spawn('claude', args, {
       cwd: projectDir,
       env: this._buildEnv(),
@@ -218,6 +230,10 @@ class ClaudeRunner {
     });
 
     this._wireChild(child);
+
+    // Send initial prompt via stdin (not -p, which doesn't work with --input-format stream-json)
+    this._writeUserMessage(prompt || 'Run the /workflow skill');
+
     return child;
   }
 
@@ -229,16 +245,7 @@ class ClaudeRunner {
     if (!this._child || !this._child.stdin || this._child.stdin.destroyed) {
       throw new Error('Cannot respond: no running Claude process');
     }
-
-    const message = JSON.stringify({
-      type: 'user',
-      message: {
-        role: 'user',
-        content: [{ type: 'text', text }],
-      },
-    });
-
-    this._child.stdin.write(message + '\n');
+    this._writeUserMessage(text);
   }
 
   kill() {

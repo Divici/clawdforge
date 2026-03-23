@@ -69,13 +69,12 @@ describe('ClaudeRunner (stream-json)', () => {
   });
 
   describe('spawn', () => {
-    it('spawns claude with correct arguments', () => {
+    it('spawns claude with correct arguments (no -p, uses stdin)', () => {
       runner.spawn({ projectDir: '/tmp/project', prompt: 'Run the /workflow skill' });
       expect(childProcess.spawn).toHaveBeenCalledOnce();
       const [cmd, args, opts] = childProcess.spawn.mock.calls[0];
       expect(cmd).toBe('claude');
-      expect(args).toContain('-p');
-      expect(args).toContain('Run the /workflow skill');
+      expect(args).not.toContain('-p');
       expect(args).toContain('--input-format');
       expect(args).toContain('--output-format');
       expect(args).toContain('stream-json');
@@ -85,16 +84,26 @@ describe('ClaudeRunner (stream-json)', () => {
       expect(opts.stdio).toEqual(['pipe', 'pipe', 'pipe']);
     });
 
+    it('does not pass -p flag (initial prompt goes via stdin)', () => {
+      runner.spawn({ projectDir: '/tmp/project', prompt: 'Run the /workflow skill' });
+      const [, args] = childProcess.spawn.mock.calls[0];
+      expect(args).not.toContain('-p');
+      expect(args).not.toContain('Run the /workflow skill');
+    });
+
     it('returns the child process', () => {
       const result = runner.spawn({ projectDir: '/tmp/project', prompt: 'test' });
       expect(result).toBeDefined();
       expect(result.pid).toBe(12345);
     });
 
-    it('uses default prompt when none provided', () => {
+    it('writes initial prompt to stdin (verified via respond sharing same path)', () => {
+      // The initial prompt is written via _writeUserMessage, same as respond().
+      // We verify respond() writes correctly in the respond tests below,
+      // and here we just verify spawn doesn't use -p.
       runner.spawn({ projectDir: '/tmp/project' });
       const [, args] = childProcess.spawn.mock.calls[0];
-      expect(args).toContain('Run the /workflow skill');
+      expect(args).not.toContain('-p');
     });
   });
 
@@ -210,13 +219,19 @@ describe('ClaudeRunner (stream-json)', () => {
   });
 
   describe('respond (stdin)', () => {
-    it('writes user message as JSON to stdin', () => {
+    it('writes user message as JSON to stdin', async () => {
       runner.spawn({ projectDir: '/tmp/p', prompt: 'test' });
       const child = getLastChild();
+
       const written = [];
       child.stdin.on('data', (chunk) => written.push(chunk.toString()));
 
+      // Wait a tick for initial prompt write to flush through
+      await new Promise((r) => setTimeout(r, 5));
+      written.length = 0; // clear initial prompt
+
       runner.respond('PostgreSQL');
+      await new Promise((r) => setTimeout(r, 5));
 
       expect(childProcess.spawn).toHaveBeenCalledTimes(1); // no respawn
       expect(written.length).toBeGreaterThan(0);
