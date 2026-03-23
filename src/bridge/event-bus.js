@@ -9,6 +9,18 @@ const FORGE_EVENTS_V2 = [
   'forge:agent-spawn', 'forge:agent-done',
 ];
 
+// Events emitted by ForgeStateWatcher (disk-state architecture)
+const FORGE_STATE_EVENTS = [
+  'forge:state-update',       // full state.json on every change
+  'forge:presearch-update',   // full presearch-state.json
+  'forge:build-update',       // full build-state.json
+  'forge:mode-change',        // { mode }
+  'forge:status-change',      // { status }
+  'forge:loop-change',        // { loop, name }
+  'forge:phase-change',       // { phase, completedPhases }
+  'forge:waiting-for-input',  // { requestId }
+];
+
 // Events emitted from stream-json Claude CLI output
 const CLAUDE_EVENTS = [
   'claude:session',      // session_id + tools from init
@@ -32,4 +44,4 @@ class ForgeBus extends EventEmitter {
   }
 }
 
-module.exports = { ForgeBus, FORGE_EVENTS_V2, CLAUDE_EVENTS };
+module.exports = { ForgeBus, FORGE_EVENTS_V2, FORGE_STATE_EVENTS, CLAUDE_EVENTS };

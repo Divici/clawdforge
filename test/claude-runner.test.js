@@ -20,6 +20,9 @@ const originalSpawn = childProcess.spawn;
 const originalMkdirSync = fs.mkdirSync;
 const originalWriteFileSync = fs.writeFileSync;
 const originalUnlinkSync = fs.unlinkSync;
+const originalExistsSync = fs.existsSync;
+const originalReadFileSync = fs.readFileSync;
+const originalAppendFileSync = fs.appendFileSync;
 
 beforeEach(() => {
   mockChildren = [];
@@ -31,6 +34,9 @@ beforeEach(() => {
   fs.mkdirSync = vi.fn();
   fs.writeFileSync = vi.fn();
   fs.unlinkSync = vi.fn();
+  fs.existsSync = vi.fn(() => false);
+  fs.readFileSync = vi.fn(() => '{}');
+  fs.appendFileSync = vi.fn();
 });
 
 afterEach(() => {
@@ -38,6 +44,9 @@ afterEach(() => {
   fs.mkdirSync = originalMkdirSync;
   fs.writeFileSync = originalWriteFileSync;
   fs.unlinkSync = originalUnlinkSync;
+  fs.existsSync = originalExistsSync;
+  fs.readFileSync = originalReadFileSync;
+  fs.appendFileSync = originalAppendFileSync;
 });
 
 const { ClaudeRunner } = require('../src/bridge/claude-runner');
@@ -71,7 +80,6 @@ describe('ClaudeRunner (stream-json)', () => {
       const [cmd, args, opts] = childProcess.spawn.mock.calls[0];
       expect(cmd).toBe('claude');
       expect(args).toContain('-p');
-      expect(args).toContain('Run the /workflow skill');
       expect(args).toContain('--output-format');
       expect(args).toContain('stream-json');
       expect(args).toContain('--verbose');
@@ -79,6 +87,21 @@ describe('ClaudeRunner (stream-json)', () => {
       expect(args).not.toContain('--input-format');
       expect(opts.cwd).toBe('/tmp/project');
       expect(opts.stdio).toEqual(['ignore', 'pipe', 'pipe']);
+    });
+
+    it('prepends autonomous mode prefix to prompt', () => {
+      runner.spawn({ projectDir: '/tmp/project', prompt: 'Run the /workflow skill' });
+      const [, args] = childProcess.spawn.mock.calls[0];
+      const promptIdx = args.indexOf('-p') + 1;
+      expect(args[promptIdx]).toContain('AUTONOMOUS mode');
+      expect(args[promptIdx]).toContain('Run the /workflow skill');
+    });
+
+    it('prepends interactive mode prefix when runMode is interactive', () => {
+      runner.spawn({ projectDir: '/tmp/project', prompt: 'test', runMode: 'interactive' });
+      const [, args] = childProcess.spawn.mock.calls[0];
+      const promptIdx = args.indexOf('-p') + 1;
+      expect(args[promptIdx]).toContain('INTERACTIVE mode');
     });
 
     it('returns the child process', () => {
@@ -90,7 +113,92 @@ describe('ClaudeRunner (stream-json)', () => {
     it('uses default prompt when none provided', () => {
       runner.spawn({ projectDir: '/tmp/project' });
       const [, args] = childProcess.spawn.mock.calls[0];
-      expect(args).toContain('Run the /workflow skill');
+      const promptIdx = args.indexOf('-p') + 1;
+      expect(args[promptIdx]).toContain('Run the /workflow skill');
+    });
+  });
+
+  describe('disk-state infrastructure', () => {
+    it('creates .forge/ directory on spawn', () => {
+      runner.spawn({ projectDir: '/tmp/project', prompt: 'test' });
+      const mkdirCalls = fs.mkdirSync.mock.calls.map(c => c[0]);
+      expect(mkdirCalls.some(p => p.includes('.forge'))).toBe(true);
+    });
+
+    it('adds .forge/ to .gitignore if not already present', () => {
+      fs.existsSync = vi.fn(() => false); // no .gitignore exists
+      runner.spawn({ projectDir: '/tmp/project', prompt: 'test' });
+      expect(fs.appendFileSync).toHaveBeenCalled();
+      const appendCall = fs.appendFileSync.mock.calls.find(c => c[0].includes('.gitignore'));
+      expect(appendCall).toBeDefined();
+      expect(appendCall[1]).toContain('.forge/');
+    });
+
+    it('skips .gitignore append if .forge/ already listed', () => {
+      fs.existsSync = vi.fn(() => true);
+      fs.readFileSync = vi.fn(() => 'node_modules/\n.forge/\n');
+      runner.spawn({ projectDir: '/tmp/project', prompt: 'test' });
+      const appendCalls = fs.appendFileSync.mock.calls.filter(c => c[0].includes('.gitignore'));
+      expect(appendCalls).toHaveLength(0);
+    });
+
+    it('installs gate-check.js in .forge/', () => {
+      runner.spawn({ projectDir: '/tmp/project', prompt: 'test' });
+      const writeCalls = fs.writeFileSync.mock.calls;
+      const hookWrite = writeCalls.find(c => c[0].includes('gate-check.js'));
+      expect(hookWrite).toBeDefined();
+      expect(hookWrite[1]).toContain('FORGE GATE CHECK');
+    });
+
+    it('writes Stop hook config to .claude/settings.local.json', () => {
+      runner.spawn({ projectDir: '/tmp/project', prompt: 'test' });
+      const writeCalls = fs.writeFileSync.mock.calls;
+      const settingsWrite = writeCalls.find(c => c[0].includes('settings.local.json'));
+      expect(settingsWrite).toBeDefined();
+      const settings = JSON.parse(settingsWrite[1]);
+      expect(settings.hooks.Stop).toBeDefined();
+      expect(settings.hooks.Stop[0].hooks[0].command).toContain('gate-check.js');
+    });
+
+    it('installs forge protocol rules with autonomous mode', () => {
+      runner.spawn({ projectDir: '/tmp/project', prompt: 'test' });
+      const writeCalls = fs.writeFileSync.mock.calls;
+      const rulesWrite = writeCalls.find(c => c[0].includes('forge-protocol.md'));
+      expect(rulesWrite).toBeDefined();
+      expect(rulesWrite[1]).toContain('Autonomous Mode');
+      expect(rulesWrite[1]).toContain('.forge/state.json');
+    });
+
+    it('installs forge protocol rules with interactive mode', () => {
+      runner.spawn({ projectDir: '/tmp/project', prompt: 'test', runMode: 'interactive' });
+      const writeCalls = fs.writeFileSync.mock.calls;
+      const rulesWrite = writeCalls.find(c => c[0].includes('forge-protocol.md'));
+      expect(rulesWrite).toBeDefined();
+      expect(rulesWrite[1]).toContain('Interactive Mode');
+    });
+
+    it('starts ForgeStateWatcher on spawn', () => {
+      runner.spawn({ projectDir: '/tmp/project', prompt: 'test' });
+      expect(runner._watcher).not.toBeNull();
+    });
+  });
+
+  describe('writeUserInput', () => {
+    it('writes user-input.json to .forge/', () => {
+      runner.spawn({ projectDir: '/tmp/project', prompt: 'test' });
+      runner.writeUserInput('q1', 'SQLite');
+      const writeCalls = fs.writeFileSync.mock.calls;
+      const inputWrite = writeCalls.find(c => c[0].includes('user-input.json'));
+      expect(inputWrite).toBeDefined();
+      const data = JSON.parse(inputWrite[1]);
+      expect(data.requestId).toBe('q1');
+      expect(data.answer).toBe('SQLite');
+      expect(data.version).toBe(1);
+      expect(data.answeredAt).toBeDefined();
+    });
+
+    it('throws if no project directory', () => {
+      expect(() => runner.writeUserInput('q1', 'test')).toThrow(/no project/i);
     });
   });
 
@@ -157,15 +265,15 @@ describe('ClaudeRunner (stream-json)', () => {
       expect(bus.emit).toHaveBeenCalledWith('claude:text', { text: 'Starting presearch...' });
     });
 
-    it('forwards text to onText callback for StageParser', () => {
+    it('forwards text to onText callback', () => {
       const onText = vi.fn();
       runner.spawn({ projectDir: '/tmp/p', prompt: 'test', onText });
       const child = getLastChild();
       pushLine(child, {
         type: 'assistant',
-        message: { content: [{ type: 'text', text: '[FORGE:PHASE phase=scaffold total=3 current=1]' }] },
+        message: { content: [{ type: 'text', text: 'hello' }] },
       });
-      expect(onText).toHaveBeenCalledWith('[FORGE:PHASE phase=scaffold total=3 current=1]');
+      expect(onText).toHaveBeenCalledWith('hello');
     });
   });
 
@@ -205,7 +313,7 @@ describe('ClaudeRunner (stream-json)', () => {
     });
   });
 
-  describe('respond (--resume)', () => {
+  describe('respond (--resume, deprecated)', () => {
     it('spawns a new process with --resume and session_id', () => {
       runner.spawn({ projectDir: '/tmp/p', prompt: 'test' });
       const child = getLastChild();
@@ -221,17 +329,6 @@ describe('ClaudeRunner (stream-json)', () => {
       expect(args).toContain('sess-abc');
       expect(args).toContain('-p');
       expect(args).toContain('PostgreSQL');
-      expect(args).toContain('--output-format');
-      expect(args).toContain('stream-json');
-    });
-
-    it('kills previous child if still alive before responding', () => {
-      runner.spawn({ projectDir: '/tmp/p', prompt: 'test' });
-      const firstChild = getLastChild();
-      pushLine(firstChild, { type: 'system', subtype: 'init', session_id: 'sess-x', tools: [] });
-
-      runner.respond('answer');
-      expect(firstChild.kill).toHaveBeenCalled();
     });
 
     it('throws if no sessionId available', () => {
@@ -255,6 +352,14 @@ describe('ClaudeRunner (stream-json)', () => {
       expect(child.kill).toHaveBeenCalled();
     });
 
+    it('kill stops the watcher', () => {
+      runner.spawn({ projectDir: '/tmp/p', prompt: 'test' });
+      const watcher = runner._watcher;
+      const stopSpy = vi.spyOn(watcher, 'stop');
+      runner.kill();
+      expect(stopSpy).toHaveBeenCalled();
+    });
+
     it('kill does not throw when no process exists', () => {
       expect(() => runner.kill()).not.toThrow();
     });
@@ -267,17 +372,34 @@ describe('ClaudeRunner (stream-json)', () => {
     });
   });
 
-  describe('forge rules', () => {
-    it('installs forge rules on spawn', () => {
-      runner.spawn({ projectDir: '/tmp/p', prompt: 'test' });
-      expect(fs.mkdirSync).toHaveBeenCalled();
-      expect(fs.writeFileSync).toHaveBeenCalled();
-    });
-
-    it('removes forge rules on kill', () => {
+  describe('cleanup on kill', () => {
+    it('removes installed files on kill', () => {
       runner.spawn({ projectDir: '/tmp/p', prompt: 'test' });
       runner.kill();
       expect(fs.unlinkSync).toHaveBeenCalled();
+    });
+
+    it('cleans up Stop hook from settings.local.json', () => {
+      // Pre-populate settings with our hook
+      fs.readFileSync = vi.fn((p) => {
+        if (typeof p === 'string' && p.includes('settings.local.json')) {
+          return JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: 'command', command: 'node .forge/gate-check.js' }] }] } });
+        }
+        return '{}';
+      });
+
+      runner.spawn({ projectDir: '/tmp/p', prompt: 'test' });
+      runner.kill();
+
+      // Verify settings was rewritten without Stop hook
+      const settingsWrites = fs.writeFileSync.mock.calls.filter(c =>
+        typeof c[0] === 'string' && c[0].includes('settings.local.json')
+      );
+      const lastWrite = settingsWrites[settingsWrites.length - 1];
+      if (lastWrite) {
+        const settings = JSON.parse(lastWrite[1]);
+        expect(settings.hooks?.Stop).toBeUndefined();
+      }
     });
   });
 

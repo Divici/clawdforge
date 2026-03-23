@@ -9,8 +9,15 @@ contextBridge.exposeInMainWorld('forgeAPI', {
   spawnClaude: (config) => ipcRenderer.send('claude:spawn', config),
   onClaudeExit: (callback) => ipcRenderer.on('claude:exit', (_event, data) => callback(data)),
 
-  // Forge events (parsed stage events)
+  // Forge events — legacy marker-based (kept for Phase 1 parallel)
   onForgeEvent: (callback) => ipcRenderer.on('forge:event', (_event, data) => callback(data)),
+
+  // Forge events — disk-state (Path B architecture)
+  onStateUpdate: (callback) => ipcRenderer.on('forge:state-update', (_event, data) => callback(data)),
+  onPresearchUpdate: (callback) => ipcRenderer.on('forge:presearch-update', (_event, data) => callback(data)),
+  onBuildUpdate: (callback) => ipcRenderer.on('forge:build-update', (_event, data) => callback(data)),
+  onModeChange: (callback) => ipcRenderer.on('forge:mode-change', (_event, data) => callback(data)),
+  onWaitingForInput: (callback) => ipcRenderer.on('forge:waiting-for-input', (_event, data) => callback(data)),
 
   // Raw Claude output (clean text from assistant, for build log)
   onRawOutput: (callback) => ipcRenderer.on('forge:raw-output', (_event, data) => callback(data)),

@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { ForgeBus, FORGE_EVENTS_V2, CLAUDE_EVENTS } = require('./src/bridge/event-bus');
+const { ForgeBus, FORGE_EVENTS_V2, FORGE_STATE_EVENTS, CLAUDE_EVENTS } = require('./src/bridge/event-bus');
 const { StageParser } = require('./src/bridge/stage-parser');
 const { ClaudeRunner } = require('./src/bridge/claude-runner');
 const { ForgeLog } = require('./src/bridge/forge-log');
@@ -65,6 +65,15 @@ for (const event of ALL_FORGE_EVENTS) {
   });
 }
 
+// Forward disk-state events to renderer (Path B architecture)
+for (const event of FORGE_STATE_EVENTS) {
+  bus.on(event, (payload) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(event, payload);
+    }
+  });
+}
+
 // Forward claude stream-json events to renderer
 for (const event of CLAUDE_EVENTS) {
   bus.on(event, (payload) => {
@@ -115,14 +124,14 @@ ipcMain.handle('project:scan-prd', async (_event, dirPath) => {
 
 // IPC: spawn Claude
 ipcMain.on('claude:spawn', (_event, config) => {
-  const { projectDir, prompt, prdFile } = config;
+  const { projectDir, prompt, prdFile, runMode } = config;
 
   if (runner) {
     runner.kill();
   }
   runner = new ClaudeRunner(bus);
 
-  // Connect assistant text to stage parser for [FORGE:] marker extraction
+  // Connect assistant text to stage parser for [FORGE:] marker extraction (legacy, kept for Phase 1 parallel)
   // and forward as raw output to the renderer for the build log
   const onText = (text) => {
     parser.feedText(text);
@@ -131,7 +140,7 @@ ipcMain.on('claude:spawn', (_event, config) => {
     }
   };
 
-  runner.spawn({ projectDir, prompt: prompt || 'Run the /workflow skill', onText });
+  runner.spawn({ projectDir, prompt: prompt || 'Run the /workflow skill', onText, runMode: runMode || 'autonomous' });
 
   // Initialize forge log
   forgeLog = new ForgeLog(projectDir);
@@ -158,9 +167,17 @@ ipcMain.on('claude:spawn', (_event, config) => {
   }
 });
 
-// IPC: forge respond (dashboard card interaction -> resume Claude with answer)
+// IPC: forge respond (dashboard card interaction -> write user input or resume Claude)
 ipcMain.on('forge:respond', (_event, { action, payload }) => {
   if (!runner) return;
+
+  // Path B: write user input to disk for interactive mode
+  if (payload && payload.requestId) {
+    runner.writeUserInput(payload.requestId, payload.answer || payload.name || payload.text || '');
+    return;
+  }
+
+  // Legacy path: translate action to text and resume via --resume
   const text = translateAction(action, payload);
   runner.respond(text);
 });
