@@ -7,6 +7,7 @@ import { ContextCard } from './ContextCard';
 import { PauseScreen } from './PauseScreen';
 import { CompletionScreen } from './CompletionScreen';
 import { ToolActivityFeed } from './ToolActivityFeed';
+import { LoadingStatus } from '../LoadingStatus';
 import './BuildDashboard.css';
 
 function isNoiseLine(line) {
@@ -192,8 +193,7 @@ export function BuildDashboard({ onComplete }) {
           <div className="build-log__body">
             {logLines.length === 0 && (
               <div className="build-log__waiting">
-                <span className="build-log__waiting-dot">●</span>
-                Initializing build process...
+                <LoadingStatus interval={2500} />
               </div>
             )}
             {logLines.map((line, i) => (

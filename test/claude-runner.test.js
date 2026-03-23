@@ -3,8 +3,6 @@ const require = createRequire(import.meta.url);
 const { EventEmitter } = require('events');
 const { PassThrough } = require('stream');
 
-// We test ClaudeRunner by monkey-patching child_process.spawn
-// before importing the module, since vi.mock with CJS is unreliable.
 const childProcess = require('child_process');
 const fs = require('fs');
 
@@ -12,7 +10,6 @@ function createMockChild() {
   const child = new EventEmitter();
   child.stdout = new PassThrough();
   child.stderr = new PassThrough();
-  child.stdin = new PassThrough();
   child.kill = vi.fn();
   child.pid = 12345;
   return child;
@@ -43,7 +40,6 @@ afterEach(() => {
   fs.unlinkSync = originalUnlinkSync;
 });
 
-// Import after patching
 const { ClaudeRunner } = require('../src/bridge/claude-runner');
 
 function getLastChild() {
@@ -69,26 +65,20 @@ describe('ClaudeRunner (stream-json)', () => {
   });
 
   describe('spawn', () => {
-    it('spawns claude with correct arguments (no -p, uses stdin)', () => {
+    it('spawns claude with -p and --output-format stream-json', () => {
       runner.spawn({ projectDir: '/tmp/project', prompt: 'Run the /workflow skill' });
       expect(childProcess.spawn).toHaveBeenCalledOnce();
       const [cmd, args, opts] = childProcess.spawn.mock.calls[0];
       expect(cmd).toBe('claude');
-      expect(args).not.toContain('-p');
-      expect(args).toContain('--input-format');
+      expect(args).toContain('-p');
+      expect(args).toContain('Run the /workflow skill');
       expect(args).toContain('--output-format');
       expect(args).toContain('stream-json');
       expect(args).toContain('--verbose');
       expect(args).toContain('--dangerously-skip-permissions');
+      expect(args).not.toContain('--input-format');
       expect(opts.cwd).toBe('/tmp/project');
-      expect(opts.stdio).toEqual(['pipe', 'pipe', 'pipe']);
-    });
-
-    it('does not pass -p flag (initial prompt goes via stdin)', () => {
-      runner.spawn({ projectDir: '/tmp/project', prompt: 'Run the /workflow skill' });
-      const [, args] = childProcess.spawn.mock.calls[0];
-      expect(args).not.toContain('-p');
-      expect(args).not.toContain('Run the /workflow skill');
+      expect(opts.stdio).toEqual(['ignore', 'pipe', 'pipe']);
     });
 
     it('returns the child process', () => {
@@ -97,13 +87,10 @@ describe('ClaudeRunner (stream-json)', () => {
       expect(result.pid).toBe(12345);
     });
 
-    it('writes initial prompt to stdin (verified via respond sharing same path)', () => {
-      // The initial prompt is written via _writeUserMessage, same as respond().
-      // We verify respond() writes correctly in the respond tests below,
-      // and here we just verify spawn doesn't use -p.
+    it('uses default prompt when none provided', () => {
       runner.spawn({ projectDir: '/tmp/project' });
       const [, args] = childProcess.spawn.mock.calls[0];
-      expect(args).not.toContain('-p');
+      expect(args).toContain('Run the /workflow skill');
     });
   });
 
@@ -218,37 +205,38 @@ describe('ClaudeRunner (stream-json)', () => {
     });
   });
 
-  describe('respond (stdin)', () => {
-    it('writes user message as JSON to stdin', async () => {
+  describe('respond (--resume)', () => {
+    it('spawns a new process with --resume and session_id', () => {
       runner.spawn({ projectDir: '/tmp/p', prompt: 'test' });
       const child = getLastChild();
-
-      const written = [];
-      child.stdin.on('data', (chunk) => written.push(chunk.toString()));
-
-      // Wait a tick for initial prompt write to flush through
-      await new Promise((r) => setTimeout(r, 5));
-      written.length = 0; // clear initial prompt
+      pushLine(child, { type: 'system', subtype: 'init', session_id: 'sess-abc', tools: [] });
+      pushLine(child, { type: 'result', session_id: 'sess-abc', stop_reason: 'end_turn', is_error: false, total_cost_usd: 0, duration_ms: 0 });
+      child.emit('close', 0);
 
       runner.respond('PostgreSQL');
-      await new Promise((r) => setTimeout(r, 5));
-
-      expect(childProcess.spawn).toHaveBeenCalledTimes(1); // no respawn
-      expect(written.length).toBeGreaterThan(0);
-      const msg = JSON.parse(written[0].trim());
-      expect(msg.type).toBe('user');
-      expect(msg.message.role).toBe('user');
-      expect(msg.message.content[0].text).toBe('PostgreSQL');
+      expect(childProcess.spawn).toHaveBeenCalledTimes(2);
+      const [cmd, args] = childProcess.spawn.mock.calls[1];
+      expect(cmd).toBe('claude');
+      expect(args).toContain('--resume');
+      expect(args).toContain('sess-abc');
+      expect(args).toContain('-p');
+      expect(args).toContain('PostgreSQL');
+      expect(args).toContain('--output-format');
+      expect(args).toContain('stream-json');
     });
 
-    it('does not spawn a new process', () => {
+    it('kills previous child if still alive before responding', () => {
       runner.spawn({ projectDir: '/tmp/p', prompt: 'test' });
+      const firstChild = getLastChild();
+      pushLine(firstChild, { type: 'system', subtype: 'init', session_id: 'sess-x', tools: [] });
+
       runner.respond('answer');
-      expect(childProcess.spawn).toHaveBeenCalledTimes(1);
+      expect(firstChild.kill).toHaveBeenCalled();
     });
 
-    it('throws if no running process', () => {
-      expect(() => runner.respond('answer')).toThrow(/no running/i);
+    it('throws if no sessionId available', () => {
+      runner.spawn({ projectDir: '/tmp/p', prompt: 'test' });
+      expect(() => runner.respond('answer')).toThrow(/no session/i);
     });
   });
 

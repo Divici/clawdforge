@@ -5,6 +5,7 @@ import { TextCard } from './TextCard';
 import { DecisionCard } from './DecisionCard';
 import { RequirementsPanel } from './RequirementsPanel';
 import { DiagnosticFeed } from './DiagnosticFeed';
+import { LoadingStatus } from '../LoadingStatus';
 import './PresearchWizard.css';
 
 export function PresearchWizard() {
@@ -187,11 +188,10 @@ export function PresearchWizard() {
           {(thinking || cards.length === 0) && (
             <div className="presearch-wizard__thinking-block">
               <div className="presearch-wizard__thinking">
-                <span className="presearch-wizard__thinking-text">
-                  {currentLoopName
-                    ? `AI Thinking: Working on ${currentLoopName}`
-                    : 'AI Thinking: Analyzing your project'}
-                </span>
+                <LoadingStatus
+                  interval={3000}
+                  prefix={currentLoopName ? `Working on ${currentLoopName}` : ''}
+                />
               </div>
               {cards.length === 0 && (
                 <div className="skeleton-tree">

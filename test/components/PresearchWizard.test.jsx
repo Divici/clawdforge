@@ -24,11 +24,12 @@ test('subscribes to forge events on mount', () => {
   expect(window.forgeAPI.onForgeEvent).toHaveBeenCalled();
 });
 
-test('renders thinking indicator initially', () => {
+test('renders thinking indicator with loading status initially', () => {
   const { container } = render(<PresearchWizard />);
   const thinking = container.querySelector('.presearch-wizard__thinking');
   expect(thinking).toBeTruthy();
-  expect(screen.getByText(/Analyzing your project/i)).toBeTruthy();
+  expect(container.querySelector('.loading-status')).toBeTruthy();
+  expect(container.querySelector('.loading-status__dot')).toBeTruthy();
 });
 
 test('renders two-column layout', () => {

@@ -7,7 +7,7 @@ const { JsonlParser } = require('./jsonl-parser');
 // Forge protocol instructions written as a rules file in the target project.
 // Claude CLI reads .claude/rules/*.md on startup — this persists through
 // all skill invocations including /workflow, /presearch, /build.
-const FORGE_PROTOCOL_RULES = `CRITICAL PACING RULE: Ask exactly ONE question per turn. After emitting a QUESTION (with its OPTIONs) or TEXT_QUESTION, STOP immediately. Do not ask another question in the same turn. Do not continue to the next subsection. Wait for the user to answer before proceeding. This is the most important behavioral rule.
+const FORGE_PROTOCOL_RULES = `Ask 2-3 related questions per turn, grouped by subsection. After presenting questions, STOP and wait for the user's response. Do not dump all questions from an entire loop at once.
 
 Emit [FORGE:TYPE key=value] markers on their own line, in addition to normal output.
 ALWAYS prefer QUESTION with multiple OPTIONs over TEXT_QUESTION. Only use TEXT_QUESTION when there are truly no predefined choices.
@@ -41,28 +41,16 @@ class ClaudeRunner {
     this.sessionId = null;
   }
 
-  _buildArgs() {
-    return [
-      '--input-format', 'stream-json',
-      '--output-format', 'stream-json',
-      '--verbose',
-      '--dangerously-skip-permissions',
-    ];
-  }
-
-  /**
-   * Write a user message to the child's stdin as stream-json.
-   */
-  _writeUserMessage(text) {
-    if (!this._child || !this._child.stdin || this._child.stdin.destroyed) return;
-    const message = JSON.stringify({
-      type: 'user',
-      message: {
-        role: 'user',
-        content: [{ type: 'text', text }],
-      },
-    });
-    this._child.stdin.write(message + '\n');
+  _buildArgs(prompt, resumeId) {
+    const args = [];
+    if (resumeId) {
+      args.push('--resume', resumeId);
+    }
+    args.push('-p', prompt);
+    args.push('--output-format', 'stream-json');
+    args.push('--verbose');
+    args.push('--dangerously-skip-permissions');
+    return args;
   }
 
   _buildEnv() {
@@ -211,8 +199,8 @@ class ClaudeRunner {
   }
 
   /**
-   * Spawn Claude CLI in bidirectional stream-json mode.
-   * One long-lived process — responses are sent via stdin.
+   * Spawn Claude CLI with -p and --output-format stream-json.
+   * Each turn is a separate process. Use respond() for follow-ups via --resume.
    */
   spawn(config) {
     const { projectDir, prompt, onText } = config;
@@ -221,31 +209,43 @@ class ClaudeRunner {
 
     this._installForgeRules(projectDir);
 
-    const args = this._buildArgs();
+    const args = this._buildArgs(prompt || 'Run the /workflow skill');
     const child = childProcess.spawn('claude', args, {
       cwd: projectDir,
       env: this._buildEnv(),
       shell: process.platform === 'win32',
-      stdio: ['pipe', 'pipe', 'pipe'],
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
 
     this._wireChild(child);
-
-    // Send initial prompt via stdin (not -p, which doesn't work with --input-format stream-json)
-    this._writeUserMessage(prompt || 'Run the /workflow skill');
-
     return child;
   }
 
   /**
-   * Send a user response to the running Claude process via stdin.
-   * No respawn — writes directly to the existing process.
+   * Send a response by spawning a new --resume process.
+   * The previous process should have already exited (result event received).
    */
   respond(text) {
-    if (!this._child || !this._child.stdin || this._child.stdin.destroyed) {
-      throw new Error('Cannot respond: no running Claude process');
+    if (!this.sessionId) {
+      throw new Error('Cannot respond: no session ID available');
     }
-    this._writeUserMessage(text);
+
+    // Kill previous child if somehow still alive
+    if (this._child) {
+      this._child.kill();
+      this._child = null;
+    }
+
+    const args = this._buildArgs(text, this.sessionId);
+    const child = childProcess.spawn('claude', args, {
+      cwd: this._projectDir,
+      env: this._buildEnv(),
+      shell: process.platform === 'win32',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    this._wireChild(child);
+    return child;
   }
 
   kill() {
