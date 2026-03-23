@@ -25,7 +25,7 @@ const LOADING_MESSAGES = [
  * Rotating loading status messages, similar to Claude CLI's loading indicators.
  * Cycles through messages at a set interval with a fade transition.
  */
-export function LoadingStatus({ interval = 1500, prefix = '' }) {
+export function LoadingStatus({ interval = 6000, prefix = '' }) {
   const [index, setIndex] = useState(() => Math.floor(Math.random() * LOADING_MESSAGES.length));
   const [fading, setFading] = useState(false);
   const timerRef = useRef(null);
