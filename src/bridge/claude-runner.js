@@ -7,7 +7,9 @@ const { JsonlParser } = require('./jsonl-parser');
 // Forge protocol instructions written as a rules file in the target project.
 // Claude CLI reads .claude/rules/*.md on startup — this persists through
 // all skill invocations including /workflow, /presearch, /build.
-const FORGE_PROTOCOL_RULES = `Emit [FORGE:TYPE key=value] markers on their own line, in addition to normal output.
+const FORGE_PROTOCOL_RULES = `CRITICAL PACING RULE: Ask exactly ONE question per turn. After emitting a QUESTION (with its OPTIONs) or TEXT_QUESTION, STOP immediately. Do not ask another question in the same turn. Do not continue to the next subsection. Wait for the user to answer before proceeding. This is the most important behavioral rule.
+
+Emit [FORGE:TYPE key=value] markers on their own line, in addition to normal output.
 ALWAYS prefer QUESTION with multiple OPTIONs over TEXT_QUESTION. Only use TEXT_QUESTION when there are truly no predefined choices.
 Every OPTION MUST have at least 2 pros (✓) and 1 con (✗) separated by pipes. Never omit pros/cons.
 [FORGE:QUESTION id=q1] What database should we use?
