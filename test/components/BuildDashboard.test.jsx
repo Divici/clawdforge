@@ -7,6 +7,9 @@ beforeEach(() => {
   forgeEventCallback = null;
   window.forgeAPI = {
     onForgeEvent: (cb) => { forgeEventCallback = cb; },
+    onRawOutput: vi.fn(),
+    onToolUse: vi.fn(),
+    onToolResult: vi.fn(),
     sendForgeResponse: vi.fn(),
   };
 });

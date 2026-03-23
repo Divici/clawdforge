@@ -9,6 +9,18 @@ const FORGE_EVENTS_V2 = [
   'forge:agent-spawn', 'forge:agent-done',
 ];
 
+// Events emitted from stream-json Claude CLI output
+const CLAUDE_EVENTS = [
+  'claude:session',      // session_id + tools from init
+  'claude:text',         // assistant text content
+  'claude:tool-use',     // tool invocation (Read, Edit, Bash, etc.)
+  'claude:tool-result',  // tool result
+  'claude:cost',         // cost/duration from result event
+  'claude:turn-end',     // turn completed
+  'claude:error',        // stderr output
+  'claude:exit',         // process exited
+];
+
 class ForgeBus extends EventEmitter {
   constructor() {
     super();
@@ -20,4 +32,4 @@ class ForgeBus extends EventEmitter {
   }
 }
 
-module.exports = { ForgeBus, FORGE_EVENTS_V2 };
+module.exports = { ForgeBus, FORGE_EVENTS_V2, CLAUDE_EVENTS };

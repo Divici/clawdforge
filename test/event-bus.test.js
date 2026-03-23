@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { ForgeBus, FORGE_EVENTS_V2 } = require('../src/bridge/event-bus');
+const { ForgeBus, FORGE_EVENTS_V2, CLAUDE_EVENTS } = require('../src/bridge/event-bus');
 
 describe('ForgeBus', () => {
   it('emits and receives events', () => {
@@ -57,5 +57,24 @@ describe('ForgeBus', () => {
     bus.emit('forge:question', { id: 'q1', content: 'What db?' });
     expect(received).toHaveLength(1);
     expect(received[0].id).toBe('q1');
+  });
+
+  it('CLAUDE_EVENTS contains 8 event names', () => {
+    expect(CLAUDE_EVENTS).toHaveLength(8);
+  });
+
+  it('all claude events start with claude:', () => {
+    for (const event of CLAUDE_EVENTS) {
+      expect(event.startsWith('claude:')).toBe(true);
+    }
+  });
+
+  it('emitting claude events works', () => {
+    const bus = new ForgeBus();
+    const received = [];
+    bus.on('claude:tool-use', (data) => received.push(data));
+    bus.emit('claude:tool-use', { name: 'Read', input: { file_path: '/tmp/x' } });
+    expect(received).toHaveLength(1);
+    expect(received[0].name).toBe('Read');
   });
 });

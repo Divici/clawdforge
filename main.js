@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { ForgeBus, FORGE_EVENTS_V2 } = require('./src/bridge/event-bus');
+const { ForgeBus, FORGE_EVENTS_V2, CLAUDE_EVENTS } = require('./src/bridge/event-bus');
 const { StageParser } = require('./src/bridge/stage-parser');
 const { ClaudeRunner } = require('./src/bridge/claude-runner');
 const { ForgeLog } = require('./src/bridge/forge-log');
@@ -50,7 +50,7 @@ function createWindow() {
   }
 }
 
-// Forward v1 + v2 events to renderer
+// Forward v1 + v2 forge events to renderer
 const ALL_FORGE_EVENTS = [
   'mode:change', 'stage:change', 'agent:spawn', 'agent:done',
   'decision:lock', 'artifact:create', 'warning',
@@ -61,6 +61,15 @@ for (const event of ALL_FORGE_EVENTS) {
   bus.on(event, (payload) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('forge:event', { type: event, ...payload });
+    }
+  });
+}
+
+// Forward claude stream-json events to renderer
+for (const event of CLAUDE_EVENTS) {
+  bus.on(event, (payload) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send(event, payload);
     }
   });
 }
@@ -112,14 +121,17 @@ ipcMain.on('claude:spawn', (_event, config) => {
     runner.kill();
   }
   runner = new ClaudeRunner(bus);
-  runner.spawn({ projectDir, prompt, prdFile }, (data) => {
-    // Feed to stage parser — markers are extracted and emitted as events
-    parser.feed(data);
-    // Forward raw output for build log display
+
+  // Connect assistant text to stage parser for [FORGE:] marker extraction
+  // and forward as raw output to the renderer for the build log
+  const onText = (text) => {
+    parser.feedText(text);
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('forge:raw-output', data);
+      mainWindow.webContents.send('forge:raw-output', text);
     }
-  });
+  };
+
+  runner.spawn({ projectDir, prompt: prompt || 'Run the /workflow skill', onText });
 
   // Initialize forge log
   forgeLog = new ForgeLog(projectDir);
@@ -142,29 +154,15 @@ ipcMain.on('claude:spawn', (_event, config) => {
     if (forgeLog) forgeLog.updateMode(payload.mode);
   });
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('claude:spawn', { pid: runner.ptyProcess?.pid });
+    mainWindow.webContents.send('claude:spawn', { sessionId: runner.sessionId });
   }
 });
 
-// IPC: terminal input from user
-ipcMain.on('terminal:input', (_event, data) => {
-  if (runner) {
-    runner.write(data);
-  }
-});
-
-// IPC: terminal resize
-ipcMain.on('terminal:resize', (_event, { cols, rows }) => {
-  if (runner) {
-    runner.resize(cols, rows);
-  }
-});
-
-// IPC: forge respond (dashboard card interaction -> stdin)
+// IPC: forge respond (dashboard card interaction -> resume Claude with answer)
 ipcMain.on('forge:respond', (_event, { action, payload }) => {
   if (!runner) return;
   const text = translateAction(action, payload);
-  runner.write(text + '\r');
+  runner.respond(text);
 });
 
 // IPC: load forge log for resume

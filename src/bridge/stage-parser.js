@@ -110,6 +110,19 @@ class StageParser {
     return null;
   }
 
+  /**
+   * Feed clean text from stream-json assistant content blocks.
+   * Unlike feed(), this does not buffer across calls — each text
+   * block is self-contained.
+   */
+  feedText(text) {
+    if (!text) return;
+    const lines = text.split('\n');
+    for (const line of lines) {
+      this.parseLine(line);
+    }
+  }
+
   flush() {
     if (this.lineBuffer.trim()) {
       this.parseLine(this.lineBuffer);

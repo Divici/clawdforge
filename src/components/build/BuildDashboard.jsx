@@ -6,24 +6,12 @@ import { BlockerCard } from './BlockerCard';
 import { ContextCard } from './ContextCard';
 import { PauseScreen } from './PauseScreen';
 import { CompletionScreen } from './CompletionScreen';
+import { ToolActivityFeed } from './ToolActivityFeed';
 import './BuildDashboard.css';
-
-function stripAnsi(text) {
-  return text
-    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-    .replace(/\x1b\][^\x07]*\x07/g, '')
-    .replace(/\x1b\[\?[0-9;]*[a-zA-Z]/g, '')
-    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
-}
 
 function isNoiseLine(line) {
   const t = line.trim();
   if (!t || t.length <= 2) return true;
-  if (/^[✻✶✢✽·*●⠂⠐⏵⏸⎿─━]+$/.test(t)) return true;
-  if (t === '>') return true;
-  if (/^\[[-]+\]\s*\d+%/.test(t) && t.length < 30) return true;
-  // Filter repeated progress/spinner lines
-  if (/^(Brewed|Recombobulating|bypass permissions)/.test(t)) return true;
   return false;
 }
 
@@ -49,7 +37,6 @@ export function BuildDashboard({ onComplete }) {
   const [summary, setSummary] = useState(null);
   const [logLines, setLogLines] = useState([]);
   const logRef = useRef(null);
-  const rawBuffer = useRef('');
 
   useEffect(() => {
     if (!window.forgeAPI) return;
@@ -116,14 +103,10 @@ export function BuildDashboard({ onComplete }) {
 
     window.forgeAPI.onForgeEvent(handleEvent);
 
-    // Raw output → styled build log
+    // Raw output → styled build log (text is clean from stream-json, no ANSI stripping)
     if (window.forgeAPI.onRawOutput) {
       window.forgeAPI.onRawOutput((text) => {
-        rawBuffer.current += text;
-        const cleaned = stripAnsi(rawBuffer.current);
-        const lines = cleaned.split('\n');
-        rawBuffer.current = lines.pop() || '';
-
+        const lines = text.split('\n');
         const meaningful = lines
           .map(l => l.trimEnd())
           .filter(l => !isNoiseLine(l));
@@ -196,6 +179,9 @@ export function BuildDashboard({ onComplete }) {
             })}
           </CardLog>
         )}
+
+        {/* Tool activity feed — real-time tool calls from stream-json */}
+        <ToolActivityFeed />
 
         {/* Build log — always visible, styled like Stitch diagnostic feed */}
         <div className="build-log" ref={logRef}>

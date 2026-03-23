@@ -370,4 +370,42 @@ describe('StageParser', () => {
       expect(result.event).toBe('forge:unknown');
     });
   });
+
+  describe('feedText() — clean text from stream-json', () => {
+    it('parses forge markers from multi-line text', () => {
+      const handler = vi.fn();
+      bus.on('forge:phase', handler);
+      parser.feedText('Starting build...\n[FORGE:PHASE phase=scaffold total=3 current=1]\nMore text');
+      expect(handler).toHaveBeenCalledOnce();
+      expect(handler).toHaveBeenCalledWith(expect.objectContaining({ phase: 'scaffold' }));
+    });
+
+    it('handles single-line text', () => {
+      const handler = vi.fn();
+      bus.on('forge:decision', handler);
+      parser.feedText('[FORGE:DECISION] Database: SQLite');
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it('handles text with no markers', () => {
+      const handler = vi.fn();
+      bus.on('forge:decision', handler);
+      parser.feedText('Just some regular text from Claude');
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('handles empty text', () => {
+      expect(() => parser.feedText('')).not.toThrow();
+    });
+
+    it('does not buffer across calls (no line buffer)', () => {
+      const handler = vi.fn();
+      bus.on('forge:mode', handler);
+      parser.feedText('[FORGE:MODE mode=build]');
+      expect(handler).toHaveBeenCalledOnce();
+      // Second call — should not combine with first
+      parser.feedText('[FORGE:MODE mode=presearch]');
+      expect(handler).toHaveBeenCalledTimes(2);
+    });
+  });
 });

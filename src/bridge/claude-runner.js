@@ -1,7 +1,8 @@
-const pty = require('node-pty');
+const childProcess = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { JsonlParser } = require('./jsonl-parser');
 
 // Forge protocol instructions written as a rules file in the target project.
 // Claude CLI reads .claude/rules/*.md on startup — this persists through
@@ -31,14 +32,29 @@ const RULES_FILENAME = 'forge-protocol.md';
 class ClaudeRunner {
   constructor(bus) {
     this.bus = bus;
-    this.ptyProcess = null;
-    this._rulesPath = null;
+    this._child = null;
+    this._projectDir = null;
+    this._rulesPaths = [];
+    this._onText = null;
+    this.sessionId = null;
+  }
+
+  _buildArgs(prompt, resumeId) {
+    const args = [];
+    if (resumeId) {
+      args.push('--resume', resumeId);
+    }
+    args.push('-p', prompt);
+    args.push('--output-format', 'stream-json');
+    args.push('--verbose');
+    args.push('--dangerously-skip-permissions');
+    return args;
   }
 
   _buildEnv() {
     return {
       ...process.env,
-      FORCE_COLOR: '1',
+      FORCE_COLOR: '0',
       FORGE_ENABLED: 'true',
     };
   }
@@ -46,13 +62,11 @@ class ClaudeRunner {
   /**
    * Write the forge protocol rules file into BOTH:
    * 1. Global ~/.claude/rules/ (guaranteed to be read by Claude CLI)
-   * 2. Target project's .claude/rules/ (project-local, may or may not be read)
+   * 2. Target project's .claude/rules/ (project-local)
    */
   _installForgeRules(projectDir) {
     this._rulesPaths = [];
 
-    // Global rules dir — this is where the user's other rules live
-    // (commit-message.md, tdd.md, etc.) so we know Claude reads it
     const globalRulesDir = path.join(os.homedir(), '.claude', 'rules');
     try {
       fs.mkdirSync(globalRulesDir, { recursive: true });
@@ -63,103 +77,196 @@ class ClaudeRunner {
       console.error('Failed to write global forge rules:', err.message);
     }
 
-    // Project-local rules dir — belt and suspenders
     const localRulesDir = path.join(projectDir, '.claude', 'rules');
     try {
       fs.mkdirSync(localRulesDir, { recursive: true });
       const localPath = path.join(localRulesDir, RULES_FILENAME);
       fs.writeFileSync(localPath, FORGE_PROTOCOL_RULES, 'utf-8');
       this._rulesPaths.push(localPath);
-    } catch (err) {
+    } catch {
       // Not critical — global rules are the primary mechanism
     }
   }
 
-  /**
-   * Remove all forge protocol rules files after Claude exits.
-   */
   _removeForgeRules() {
     if (this._rulesPaths) {
       for (const p of this._rulesPaths) {
-        try {
-          fs.unlinkSync(p);
-        } catch {
-          // Ignore — file may already be gone
-        }
+        try { fs.unlinkSync(p); } catch { /* ignore */ }
       }
       this._rulesPaths = [];
     }
   }
 
-  spawn(config, onData) {
-    const { projectDir, prompt, prdFile } = config;
-    const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/bash';
+  /**
+   * Handle a parsed JSONL event from Claude CLI stdout.
+   */
+  _handleEvent(event) {
+    switch (event.type) {
+      case 'system':
+        if (event.subtype === 'init' && event.session_id) {
+          this.sessionId = event.session_id;
+          this.bus.emit('claude:session', {
+            sessionId: event.session_id,
+            tools: event.tools || [],
+          });
+        }
+        break;
 
-    // Install forge protocol rules in the target project
+      case 'assistant':
+        this._handleAssistantMessage(event.message);
+        break;
+
+      case 'user':
+        this._handleUserMessage(event.message);
+        break;
+
+      case 'result':
+        this.bus.emit('claude:cost', {
+          sessionId: event.session_id,
+          totalCostUsd: event.total_cost_usd,
+          durationMs: event.duration_ms,
+          stopReason: event.stop_reason,
+          isError: event.is_error,
+        });
+        this.bus.emit('claude:turn-end', {
+          sessionId: event.session_id,
+          stopReason: event.stop_reason,
+        });
+        break;
+    }
+  }
+
+  _handleAssistantMessage(message) {
+    if (!message || !message.content) return;
+    for (const block of message.content) {
+      if (block.type === 'text') {
+        this.bus.emit('claude:text', { text: block.text });
+        if (this._onText) this._onText(block.text);
+      } else if (block.type === 'tool_use') {
+        this.bus.emit('claude:tool-use', {
+          id: block.id,
+          name: block.name,
+          input: block.input,
+        });
+      }
+    }
+  }
+
+  _handleUserMessage(message) {
+    if (!message || !message.content) return;
+    for (const block of message.content) {
+      if (block.type === 'tool_result') {
+        this.bus.emit('claude:tool-result', {
+          tool_use_id: block.tool_use_id,
+          content: block.content,
+        });
+      }
+    }
+  }
+
+  /**
+   * Spawn Claude CLI in stream-json mode.
+   */
+  spawn(config) {
+    const { projectDir, prompt, onText } = config;
+    this._projectDir = projectDir;
+    this._onText = onText || null;
+
     this._installForgeRules(projectDir);
 
-    this.ptyProcess = pty.spawn(shell, [], {
-      name: 'xterm-256color',
-      cols: 500,
-      rows: 30,
+    const args = this._buildArgs(prompt || 'Run the /workflow skill');
+    const child = childProcess.spawn('claude', args, {
       cwd: projectDir,
       env: this._buildEnv(),
+      shell: process.platform === 'win32',
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
 
-    let step = 0; // 0=waiting for shell, 1=claude sent, 2=workflow sent
-    let buffer = '';
+    this._child = child;
 
-    this.ptyProcess.onData((data) => {
-      if (onData) onData(data);
+    // Parse JSONL from stdout
+    const parser = new JsonlParser(
+      (event) => this._handleEvent(event),
+      (err, line) => console.warn('JSONL parse error:', err.message, line?.slice(0, 100)),
+    );
 
-      if (step >= 2) return;
-      buffer += data;
+    child.stdout.on('data', (chunk) => parser.feed(chunk.toString()));
+    child.stdout.on('end', () => parser.flush());
 
-      // Step 0 -> 1: Send claude command once shell prompt appears
-      if (step === 0 && buffer.length > 50) {
-        step = 1;
-        setTimeout(() => {
-          this.ptyProcess.write('claude --dangerously-skip-permissions\r');
-        }, 500);
-      }
-
-      // Step 1 -> 2: Wait for Claude CLI ready, then send /workflow
-      if (step === 1 && buffer.length > 500) {
-        const stripped = buffer.replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '');
-        if (stripped.includes('Tips') || stripped.includes('Claude Code') || stripped.includes('claude-code') || stripped.includes('\n> ')) {
-          step = 2;
-          setTimeout(() => {
-            this.ptyProcess.write('/workflow\r');
-          }, 1500);
+    // Capture stderr
+    const stderrParser = new JsonlParser(() => {}, () => {});
+    let stderrBuffer = '';
+    child.stderr.on('data', (chunk) => {
+      stderrBuffer += chunk.toString();
+      const lines = stderrBuffer.split('\n');
+      stderrBuffer = lines.pop() || '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed) {
+          this.bus.emit('claude:error', { message: trimmed });
         }
       }
     });
 
-    this.ptyProcess.onExit(({ exitCode, signal }) => {
-      this._removeForgeRules();
-      this.bus.emit('claude:exit', { code: exitCode, signal });
+    child.on('close', (code) => {
+      this.bus.emit('claude:exit', { code });
     });
 
-    return this.ptyProcess;
+    return child;
   }
 
-  write(data) {
-    if (this.ptyProcess) {
-      this.ptyProcess.write(data);
+  /**
+   * Send a response to Claude by resuming the session with --resume.
+   */
+  respond(text) {
+    if (!this.sessionId) {
+      throw new Error('Cannot respond: no session ID available');
     }
-  }
 
-  resize(cols, rows) {
-    if (this.ptyProcess) {
-      this.ptyProcess.resize(cols, rows);
+    // Kill current child if still running
+    if (this._child) {
+      this._child.kill();
+      this._child = null;
     }
+
+    const args = this._buildArgs(text, this.sessionId);
+    const child = childProcess.spawn('claude', args, {
+      cwd: this._projectDir,
+      env: this._buildEnv(),
+      shell: process.platform === 'win32',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    this._child = child;
+
+    const parser = new JsonlParser(
+      (event) => this._handleEvent(event),
+      (err, line) => console.warn('JSONL parse error:', err.message, line?.slice(0, 100)),
+    );
+
+    child.stdout.on('data', (chunk) => parser.feed(chunk.toString()));
+    child.stdout.on('end', () => parser.flush());
+
+    child.stderr.on('data', (chunk) => {
+      const lines = chunk.toString().split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed) this.bus.emit('claude:error', { message: trimmed });
+      }
+    });
+
+    child.on('close', (code) => {
+      this.bus.emit('claude:exit', { code });
+    });
+
+    return child;
   }
 
   kill() {
-    if (this.ptyProcess) {
+    if (this._child) {
       this._removeForgeRules();
-      this.ptyProcess.kill();
-      this.ptyProcess = null;
+      this._child.kill();
+      this._child = null;
     }
   }
 }
