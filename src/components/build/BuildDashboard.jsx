@@ -193,7 +193,7 @@ export function BuildDashboard({ onComplete }) {
           <div className="build-log__body">
             {logLines.length === 0 && (
               <div className="build-log__waiting">
-                <LoadingStatus interval={2500} />
+                <LoadingStatus />
               </div>
             )}
             {logLines.map((line, i) => (

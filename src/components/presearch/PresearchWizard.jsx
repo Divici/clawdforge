@@ -189,7 +189,6 @@ export function PresearchWizard() {
             <div className="presearch-wizard__thinking-block">
               <div className="presearch-wizard__thinking">
                 <LoadingStatus
-                  interval={3000}
                   prefix={currentLoopName ? `Working on ${currentLoopName}` : ''}
                 />
               </div>
