@@ -41,12 +41,12 @@ class ClaudeRunner {
     this.sessionId = null;
   }
 
-  _buildArgs(prompt, resumeId) {
+  _buildArgs(prompt) {
     const args = [];
-    if (resumeId) {
-      args.push('--resume', resumeId);
+    if (prompt) {
+      args.push('-p', prompt);
     }
-    args.push('-p', prompt);
+    args.push('--input-format', 'stream-json');
     args.push('--output-format', 'stream-json');
     args.push('--verbose');
     args.push('--dangerously-skip-permissions');
@@ -167,26 +167,11 @@ class ClaudeRunner {
   }
 
   /**
-   * Spawn Claude CLI in stream-json mode.
+   * Wire up JSONL parsing and event handling on a child process.
    */
-  spawn(config) {
-    const { projectDir, prompt, onText } = config;
-    this._projectDir = projectDir;
-    this._onText = onText || null;
-
-    this._installForgeRules(projectDir);
-
-    const args = this._buildArgs(prompt || 'Run the /workflow skill');
-    const child = childProcess.spawn('claude', args, {
-      cwd: projectDir,
-      env: this._buildEnv(),
-      shell: process.platform === 'win32',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-
+  _wireChild(child) {
     this._child = child;
 
-    // Parse JSONL from stdout
     const parser = new JsonlParser(
       (event) => this._handleEvent(event),
       (err, line) => console.warn('JSONL parse error:', err.message, line?.slice(0, 100)),
@@ -195,8 +180,6 @@ class ClaudeRunner {
     child.stdout.on('data', (chunk) => parser.feed(chunk.toString()));
     child.stdout.on('end', () => parser.flush());
 
-    // Capture stderr
-    const stderrParser = new JsonlParser(() => {}, () => {});
     let stderrBuffer = '';
     child.stderr.on('data', (chunk) => {
       stderrBuffer += chunk.toString();
@@ -213,55 +196,49 @@ class ClaudeRunner {
     child.on('close', (code) => {
       this.bus.emit('claude:exit', { code });
     });
+  }
 
+  /**
+   * Spawn Claude CLI in bidirectional stream-json mode.
+   * One long-lived process — responses are sent via stdin.
+   */
+  spawn(config) {
+    const { projectDir, prompt, onText } = config;
+    this._projectDir = projectDir;
+    this._onText = onText || null;
+
+    this._installForgeRules(projectDir);
+
+    const args = this._buildArgs(prompt || 'Run the /workflow skill');
+    const child = childProcess.spawn('claude', args, {
+      cwd: projectDir,
+      env: this._buildEnv(),
+      shell: process.platform === 'win32',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    this._wireChild(child);
     return child;
   }
 
   /**
-   * Send a response to Claude by resuming the session with --resume.
+   * Send a user response to the running Claude process via stdin.
+   * No respawn — writes directly to the existing process.
    */
   respond(text) {
-    if (!this.sessionId) {
-      throw new Error('Cannot respond: no session ID available');
+    if (!this._child || !this._child.stdin || this._child.stdin.destroyed) {
+      throw new Error('Cannot respond: no running Claude process');
     }
 
-    // Kill current child if still running
-    if (this._child) {
-      this._child.kill();
-      this._child = null;
-    }
-
-    const args = this._buildArgs(text, this.sessionId);
-    const child = childProcess.spawn('claude', args, {
-      cwd: this._projectDir,
-      env: this._buildEnv(),
-      shell: process.platform === 'win32',
-      stdio: ['ignore', 'pipe', 'pipe'],
+    const message = JSON.stringify({
+      type: 'user',
+      message: {
+        role: 'user',
+        content: [{ type: 'text', text }],
+      },
     });
 
-    this._child = child;
-
-    const parser = new JsonlParser(
-      (event) => this._handleEvent(event),
-      (err, line) => console.warn('JSONL parse error:', err.message, line?.slice(0, 100)),
-    );
-
-    child.stdout.on('data', (chunk) => parser.feed(chunk.toString()));
-    child.stdout.on('end', () => parser.flush());
-
-    child.stderr.on('data', (chunk) => {
-      const lines = chunk.toString().split('\n');
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed) this.bus.emit('claude:error', { message: trimmed });
-      }
-    });
-
-    child.on('close', (code) => {
-      this.bus.emit('claude:exit', { code });
-    });
-
-    return child;
+    this._child.stdin.write(message + '\n');
   }
 
   kill() {
