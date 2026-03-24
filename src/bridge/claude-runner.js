@@ -169,11 +169,14 @@ class ClaudeRunner {
   }
 
   _buildEnv() {
-    return {
-      ...process.env,
-      FORCE_COLOR: '0',
-      FORGE_ENABLED: 'true',
-    };
+    const env = { ...process.env };
+    // Remove Electron-specific vars that break spawned Node.js CLIs
+    delete env.ELECTRON_RUN_AS_NODE;
+    delete env.ELECTRON_NO_ASAR;
+    delete env.NODE_OPTIONS; // Electron sets this, can interfere
+    env.FORCE_COLOR = '0';
+    env.FORGE_ENABLED = 'true';
+    return env;
   }
 
   /**
@@ -268,6 +271,7 @@ class ClaudeRunner {
    * Remove all installed files and clean up hook config.
    */
   _cleanup() {
+    console.log('[forge-runner] Cleanup:', this._installedPaths.length, 'files');
     for (const p of this._installedPaths) {
       try { fs.unlinkSync(p); } catch { /* ignore */ }
     }
@@ -383,6 +387,7 @@ class ClaudeRunner {
     });
 
     child.on('close', (code) => {
+      console.log('[forge-runner] Claude process exited with code:', code);
       this.bus.emit('claude:exit', { code });
     });
   }
@@ -402,14 +407,14 @@ class ClaudeRunner {
     this._installForgeDir(projectDir);
     this._installGateHook(projectDir);
     this._installForgeRules(projectDir, runMode);
-    console.log('[forge-runner] Installed paths:', this._installedPaths);
+    console.log('[forge-runner] Installed', this._installedPaths.length, 'files');
 
-    // Build prompt with mode prefix
+    // Build prompt with mode prefix (no newlines — they break cmd.exe on Windows)
     const modePrefix = runMode === 'interactive'
       ? 'Run in INTERACTIVE mode. For each presearch question, set waitingForInput=true and wait for user-input.json.'
       : 'Run in AUTONOMOUS mode. Make all presearch decisions yourself using best judgment. Do not wait for user input.';
 
-    const fullPrompt = `${modePrefix}\n\n${prompt || 'Run the /workflow skill'}`;
+    const fullPrompt = `${modePrefix} ${prompt || 'Run the /workflow skill'}`;
     const args = this._buildArgs(fullPrompt);
     console.log('[forge-runner] Spawning claude with args:', args.slice(0, 4).join(' '), '...');
 

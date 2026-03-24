@@ -37,9 +37,22 @@ function createWindow() {
 
   mainWindow.setMenuBarVisibility(false);
 
-  if (!app.isPackaged) {
-    mainWindow.webContents.openDevTools({ mode: 'detach' });
-  }
+  // Always open DevTools for debugging (remove after disk-state is stable)
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
+
+  // Forward main process logs to renderer DevTools for debugging
+  const origLog = console.log;
+  const origErr = console.error;
+  const origWarn = console.warn;
+  const sendLog = (level, ...args) => {
+    const msg = args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ');
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('main-log', { level, msg });
+    }
+  };
+  console.log = (...args) => { origLog(...args); sendLog('log', ...args); };
+  console.error = (...args) => { origErr(...args); sendLog('error', ...args); };
+  console.warn = (...args) => { origWarn(...args); sendLog('warn', ...args); };
 }
 
 // Forward disk-state events to renderer

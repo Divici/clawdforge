@@ -34,3 +34,12 @@ contextBridge.exposeInMainWorld('forgeAPI', {
   // Load forge state for resume detection
   loadForgeLog: (projectDir) => ipcRenderer.invoke('forge:load-log', projectDir),
 });
+
+// Pipe main process logs to renderer DevTools console
+const { ipcRenderer: ipc } = require('electron');
+ipc.on('main-log', (_event, { level, msg }) => {
+  const prefix = '[main]';
+  if (level === 'error') console.error(prefix, msg);
+  else if (level === 'warn') console.warn(prefix, msg);
+  else console.log(prefix, msg);
+});
