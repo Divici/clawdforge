@@ -10,9 +10,11 @@ class ForgeStateWatcher {
     this._lastState = null;
     this._lastPresearch = null;
     this._lastBuild = null;
+    this._lastConfig = null;
     this._lastStateStat = null;
     this._lastPresearchStat = null;
     this._lastBuildStat = null;
+    this._lastConfigStat = null;
   }
 
   start() {
@@ -31,6 +33,7 @@ class ForgeStateWatcher {
     this._pollFile('state.json', '_lastStateStat', '_lastState', '_onStateChange');
     this._pollFile('presearch-state.json', '_lastPresearchStat', '_lastPresearch', '_onPresearchChange');
     this._pollFile('build-state.json', '_lastBuildStat', '_lastBuild', '_onBuildChange');
+    this._pollFile('config-required.json', '_lastConfigStat', '_lastConfig', '_onConfigChange');
   }
 
   _pollFile(filename, statKey, cacheKey, handlerName) {
@@ -98,6 +101,10 @@ class ForgeStateWatcher {
 
   _onBuildChange(_prev, next) {
     this.bus.emit('forge:build-update', next);
+  }
+
+  _onConfigChange(_prev, next) {
+    this.bus.emit('forge:config-update', next);
   }
 }
 

@@ -152,9 +152,17 @@ ipcMain.on('forge:respond', (_event, { action, payload }) => {
     return;
   }
 
-  // Fallback for non-requestId actions (pause, resume, skip-mock)
-  // These don't need disk-state — they're control signals
-  console.log('forge:respond without requestId:', action, payload);
+  // Write .env file for post-build configuration
+  if (action === 'write-env' && payload.content && runner?._projectDir) {
+    const envPath = path.join(runner._projectDir, payload.envFile || '.env');
+    try {
+      fs.writeFileSync(envPath, payload.content, 'utf-8');
+      console.log('[forge-main] Wrote env file:', envPath);
+    } catch (err) {
+      console.error('[forge-main] Failed to write env file:', err.message);
+    }
+    return;
+  }
 });
 
 // IPC: load forge state for resume

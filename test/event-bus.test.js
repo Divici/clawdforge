@@ -40,8 +40,8 @@ describe('ForgeBus', () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it('FORGE_STATE_EVENTS contains 8 event names', () => {
-    expect(FORGE_STATE_EVENTS).toHaveLength(8);
+  it('FORGE_STATE_EVENTS contains 9 event names', () => {
+    expect(FORGE_STATE_EVENTS).toHaveLength(9);
   });
 
   it('all state events start with forge:', () => {

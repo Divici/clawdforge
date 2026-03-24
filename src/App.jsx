@@ -3,7 +3,7 @@ import { HeaderBar } from './components/HeaderBar';
 import { LaunchScreen } from './components/LaunchScreen';
 import { PresearchWizard } from './components/presearch/PresearchWizard';
 import { BuildDashboard } from './components/build/BuildDashboard';
-import { CompletionScreen } from './components/build/CompletionScreen';
+import { ConfigScreen } from './components/build/ConfigScreen';
 import { ClawdStage } from './clawd/ClawdStage';
 import { setCostume, spawnHelper, removeHelper } from './clawd/stage-renderer';
 import { useElapsedTimer } from './hooks/useElapsedTimer';
@@ -14,7 +14,7 @@ export function App() {
   const [projectName, setProjectName] = useState('');
   const [running, setRunning] = useState(false);
   const elapsed = useElapsedTimer(running);
-  const { state, presearch, build } = useForgeState();
+  const { state, presearch, build, config } = useForgeState();
 
   // Drive mode transitions from disk state
   useEffect(() => {
@@ -122,14 +122,17 @@ export function App() {
           />
         )}
         {mode === 'complete' && (
-          <CompletionScreen
+          <ConfigScreen
+            config={config}
             summary={{
               ...(build?.summary || {}),
               projectName: projectName,
               error: state?.error || null,
-              elapsed: `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`,
+              phases: build?.phases?.length || 0,
             }}
-            onNewProject={() => { setMode('launch'); setRunning(false); }}
+            projectName={projectName}
+            elapsed={`${Math.floor(elapsed / 60)}m ${elapsed % 60}s`}
+            onSkip={() => { setMode('launch'); setRunning(false); }}
           />
         )}
       </div>

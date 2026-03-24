@@ -1,0 +1,311 @@
+.config-screen {
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Status Banner ── */
+.config-screen__banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-radius: 2px;
+  border: 1px solid;
+}
+
+.config-screen__banner--success {
+  background: rgba(76, 175, 80, 0.08);
+  border-color: rgba(76, 175, 80, 0.3);
+}
+
+.config-screen__banner--error {
+  background: rgba(244, 67, 54, 0.08);
+  border-color: rgba(244, 67, 54, 0.3);
+}
+
+.config-screen__banner-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.config-screen__banner-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.config-screen__banner--success .config-screen__banner-icon { color: var(--color-tertiary); }
+.config-screen__banner--error .config-screen__banner-icon { color: var(--color-error); }
+
+.config-screen__banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.config-screen__banner-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+}
+
+.config-screen__banner--success .config-screen__banner-status { color: var(--color-tertiary); }
+.config-screen__banner--error .config-screen__banner-status { color: var(--color-error); }
+
+.config-screen__banner-project {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-on-surface);
+}
+
+.config-screen__banner-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.config-screen__stat {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-outline);
+  padding: 4px 10px;
+  background: var(--color-surface-low);
+  border-radius: 2px;
+}
+
+/* ── Error ── */
+.config-screen__error {
+  padding: 16px;
+  background: rgba(244, 67, 54, 0.06);
+  border-left: 3px solid var(--color-error);
+}
+
+.config-screen__error-text {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-error);
+  margin: 0;
+}
+
+/* ── Config sections ── */
+.config-screen__config {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.config-screen__heading {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.config-screen__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: var(--color-surface-low);
+  border: 1px solid rgba(85, 67, 61, 0.1);
+  border-radius: 2px;
+}
+
+.config-screen__subheading {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.config-screen__hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-outline);
+  margin: 0;
+}
+
+.config-screen__hint code {
+  color: var(--color-primary-container);
+}
+
+/* ── Env var inputs ── */
+.config-screen__env-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.config-env-var {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.config-env-var__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.config-env-var__key {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-on-surface);
+}
+
+.config-env-var__required {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-error);
+  padding: 1px 6px;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 2px;
+}
+
+.config-env-var__desc {
+  font-size: 12px;
+  color: var(--color-outline);
+  margin: 0;
+}
+
+.config-env-var__input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--color-surface-lowest);
+  border: 1px solid rgba(85, 67, 61, 0.2);
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-on-surface);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.config-env-var__input:focus {
+  border-color: var(--color-primary);
+}
+
+.config-env-var__input::placeholder {
+  color: var(--color-outline-variant);
+}
+
+/* ── Save row ── */
+.config-screen__save-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.config-screen__save-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-outline);
+}
+
+/* ── Post-build steps ── */
+.config-screen__steps {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.config-screen__step {
+  font-size: 13px;
+  color: var(--color-on-surface-variant);
+}
+
+.config-screen__step code {
+  font-family: var(--font-mono);
+  background: var(--color-surface-lowest);
+  padding: 2px 6px;
+  border-radius: 2px;
+  color: var(--color-on-surface);
+}
+
+/* ── Deployment ── */
+.config-screen__deploy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.config-screen__deploy-target {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.config-screen__deploy-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-outline);
+  text-transform: uppercase;
+}
+
+.config-screen__deploy-value {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-on-surface);
+}
+
+.config-screen__deploy-cmd {
+  padding: 10px 14px;
+  background: var(--color-surface-lowest);
+  border-radius: 2px;
+}
+
+.config-screen__deploy-cmd code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-primary-container);
+}
+
+.config-screen__deploy-instructions {
+  font-size: 12px;
+  color: var(--color-outline);
+  margin: 0;
+}
+
+/* ── No config ── */
+.config-screen__no-config {
+  padding: 32px;
+  text-align: center;
+  background: var(--color-surface-low);
+  border-radius: 2px;
+}
+
+.config-screen__no-config p {
+  font-size: 14px;
+  color: var(--color-outline);
+  margin: 0;
+}
+
+/* ── Actions ── */
+.config-screen__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+}

@@ -10,6 +10,7 @@ const FORGE_STATE_EVENTS = [
   'forge:loop-change',        // { loop, name }
   'forge:phase-change',       // { phase, completedPhases }
   'forge:waiting-for-input',  // { requestId }
+  'forge:config-update',      // config-required.json contents
 ];
 
 // Events emitted from stream-json Claude CLI output

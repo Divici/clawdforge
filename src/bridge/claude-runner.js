@@ -134,12 +134,45 @@ EXAMPLE:
 }
 \`\`\`
 
+### \`.forge/config-required.json\` — Post-Build Configuration (REQUIRED when build completes)
+
+Write this file when the build is finished. List ALL environment variables, API keys, secrets, and deployment configuration the user needs to provide. During build, use \`process.env.VAR_NAME\` placeholders — never hardcode secrets. The dashboard shows this as a configuration form after build completes.
+
+EXAMPLE:
+\`\`\`json
+{
+  "version": 1,
+  "envVars": [
+    { "key": "DATABASE_URL", "description": "PostgreSQL connection string", "required": true, "placeholder": "postgresql://user:pass@host:5432/db" },
+    { "key": "STRIPE_SECRET_KEY", "description": "Stripe API secret key for payments", "required": true, "placeholder": "sk_live_..." },
+    { "key": "NEXT_PUBLIC_APP_URL", "description": "Public URL of the deployed app", "required": false, "placeholder": "https://myapp.vercel.app" }
+  ],
+  "deployment": {
+    "target": "Vercel",
+    "command": "npx vercel deploy",
+    "instructions": "Run the deploy command after configuring environment variables. Set env vars in the Vercel dashboard or via CLI.",
+    "envFile": ".env.local"
+  },
+  "postBuildSteps": [
+    "Run database migrations: npx prisma db push",
+    "Seed initial data: npm run seed"
+  ]
+}
+\`\`\`
+
+If the project has NO external dependencies (no API keys, no database, no deployment), write the file with empty arrays:
+\`\`\`json
+{ "version": 1, "envVars": [], "deployment": null, "postBuildSteps": [] }
+\`\`\`
+
 ## Writing Rules
 
 - Use the Write tool for all \`.forge/\` file writes
 - Write COMPLETE valid JSON every time (not partial updates)
 - Always update \`updatedAt\` in state.json on every write
 - Do NOT emit [FORGE:*] markers in text output — they are deprecated
+- During build, NEVER hardcode secrets or API keys — always use environment variables
+- Flag all required configuration in config-required.json — the user will provide values after build
 
 ${modeRules}
 `;

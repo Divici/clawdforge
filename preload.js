@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('forgeAPI', {
   onBuildUpdate: (callback) => ipcRenderer.on('forge:build-update', (_event, data) => callback(data)),
   onModeChange: (callback) => ipcRenderer.on('forge:mode-change', (_event, data) => callback(data)),
   onWaitingForInput: (callback) => ipcRenderer.on('forge:waiting-for-input', (_event, data) => callback(data)),
+  onConfigUpdate: (callback) => ipcRenderer.on('forge:config-update', (_event, data) => callback(data)),
 
   // Raw Claude output (assistant text for build log)
   onRawOutput: (callback) => ipcRenderer.on('forge:raw-output', (_event, data) => callback(data)),

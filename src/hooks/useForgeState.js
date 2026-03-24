@@ -9,6 +9,7 @@ export function useForgeState() {
   const [state, setState] = useState(null);
   const [presearch, setPresearch] = useState(null);
   const [build, setBuild] = useState(null);
+  const [config, setConfig] = useState(null);
 
   useEffect(() => {
     if (!window.forgeAPI) return;
@@ -22,7 +23,10 @@ export function useForgeState() {
     if (window.forgeAPI.onBuildUpdate) {
       window.forgeAPI.onBuildUpdate(setBuild);
     }
+    if (window.forgeAPI.onConfigUpdate) {
+      window.forgeAPI.onConfigUpdate(setConfig);
+    }
   }, []);
 
-  return { state, presearch, build };
+  return { state, presearch, build, config };
 }
