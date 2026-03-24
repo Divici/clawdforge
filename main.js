@@ -183,3 +183,19 @@ app.on('window-all-closed', () => {
   if (runner) runner.kill();
   app.quit();
 });
+
+// Safety net: kill Claude processes before Electron quits
+app.on('before-quit', () => {
+  if (runner) {
+    runner.kill();
+    runner = null;
+  }
+});
+
+// Last resort: catch process exit to kill orphaned children
+process.on('exit', () => {
+  if (runner) {
+    try { runner.kill(); } catch { /* best effort */ }
+    runner = null;
+  }
+});

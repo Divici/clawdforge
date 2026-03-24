@@ -518,7 +518,7 @@ class ClaudeRunner {
     }
 
     if (this._child) {
-      this._child.kill();
+      this._killProcessTree(this._child);
       this._child = null;
     }
 
@@ -534,6 +534,32 @@ class ClaudeRunner {
     return child;
   }
 
+  /**
+   * Kill the entire process tree (not just the shell wrapper).
+   * On Windows with shell: true, child.kill() only kills cmd.exe,
+   * leaving the actual claude process and its subagents running.
+   */
+  _killProcessTree(child) {
+    if (!child || !child.pid) return;
+
+    try {
+      if (process.platform === 'win32') {
+        // taskkill /T kills the entire process tree, /F forces it
+        childProcess.execSync(`taskkill /F /T /PID ${child.pid}`, { stdio: 'ignore' });
+      } else {
+        // On Unix, kill the process group
+        try {
+          process.kill(-child.pid, 'SIGTERM');
+        } catch {
+          child.kill('SIGTERM');
+        }
+      }
+    } catch {
+      // Process may already be dead — that's fine
+      try { child.kill(); } catch { /* ignore */ }
+    }
+  }
+
   kill() {
     if (this._watcher) {
       this._watcher.stop();
@@ -541,7 +567,7 @@ class ClaudeRunner {
     }
     this._cleanup();
     if (this._child) {
-      this._child.kill();
+      this._killProcessTree(this._child);
       this._child = null;
     }
   }
