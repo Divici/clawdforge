@@ -1,17 +1,12 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { ForgeBus, FORGE_EVENTS_V2, FORGE_STATE_EVENTS, CLAUDE_EVENTS } = require('./src/bridge/event-bus');
-const { StageParser } = require('./src/bridge/stage-parser');
+const { ForgeBus, FORGE_STATE_EVENTS, CLAUDE_EVENTS } = require('./src/bridge/event-bus');
 const { ClaudeRunner } = require('./src/bridge/claude-runner');
-const { ForgeLog } = require('./src/bridge/forge-log');
-const { translateAction } = require('./src/bridge/stdin-translator');
 
 let mainWindow;
 const bus = new ForgeBus();
-const parser = new StageParser(bus);
 let runner = null;
-let forgeLog = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -33,39 +28,21 @@ function createWindow() {
   if (fs.existsSync(builtPath)) {
     mainWindow.loadFile(builtPath);
   } else if (!app.isPackaged) {
-    // No built output — try Vite dev server
     mainWindow.loadURL('http://localhost:5173').catch(() => {
       mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
     });
   } else {
-    // Packaged but no dist-renderer — should not happen
     console.error('dist-renderer/index.html not found in packaged app');
   }
 
   mainWindow.setMenuBarVisibility(false);
 
-  // Open DevTools in dev mode for debugging
   if (!app.isPackaged) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
 }
 
-// Forward v1 + v2 forge events to renderer
-const ALL_FORGE_EVENTS = [
-  'mode:change', 'stage:change', 'agent:spawn', 'agent:done',
-  'decision:lock', 'artifact:create', 'warning',
-  ...FORGE_EVENTS_V2,
-];
-
-for (const event of ALL_FORGE_EVENTS) {
-  bus.on(event, (payload) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('forge:event', { type: event, ...payload });
-    }
-  });
-}
-
-// Forward disk-state events to renderer (Path B architecture)
+// Forward disk-state events to renderer
 for (const event of FORGE_STATE_EVENTS) {
   bus.on(event, (payload) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -83,7 +60,7 @@ for (const event of CLAUDE_EVENTS) {
   });
 }
 
-// Handle claude:exit from bus
+// Forward claude:exit from bus
 bus.on('claude:exit', (data) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('claude:exit', data);
@@ -104,7 +81,6 @@ ipcMain.handle('dialog:select-directory', async () => {
 ipcMain.handle('project:scan-prd', async (_event, dirPath) => {
   try {
     const files = fs.readdirSync(dirPath);
-    // Look for common PRD file patterns
     const prdPatterns = [
       /prd/i,
       /product.?requirements/i,
@@ -124,17 +100,15 @@ ipcMain.handle('project:scan-prd', async (_event, dirPath) => {
 
 // IPC: spawn Claude
 ipcMain.on('claude:spawn', (_event, config) => {
-  const { projectDir, prompt, prdFile, runMode } = config;
+  const { projectDir, prompt, runMode } = config;
 
   if (runner) {
     runner.kill();
   }
   runner = new ClaudeRunner(bus);
 
-  // Connect assistant text to stage parser for [FORGE:] marker extraction (legacy, kept for Phase 1 parallel)
-  // and forward as raw output to the renderer for the build log
+  // Forward raw assistant text to renderer for build log
   const onText = (text) => {
-    parser.feedText(text);
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('forge:raw-output', text);
     }
@@ -142,50 +116,33 @@ ipcMain.on('claude:spawn', (_event, config) => {
 
   runner.spawn({ projectDir, prompt: prompt || 'Run the /workflow skill', onText, runMode: runMode || 'autonomous' });
 
-  // Initialize forge log
-  forgeLog = new ForgeLog(projectDir);
-  forgeLog.load();
-  forgeLog._data.projectName = projectDir.split(/[/\\]/).pop();
-  forgeLog._data.startTime = new Date().toISOString();
-  forgeLog.save();
-
-  // Wire forge events to log persistence
-  bus.on('forge:decision', (payload) => {
-    if (forgeLog) forgeLog.addPresearchDecision(payload);
-  });
-  bus.on('forge:task', (payload) => {
-    if (forgeLog) forgeLog.addBuildCard({ type: 'task', ...payload, timestamp: new Date().toISOString() });
-  });
-  bus.on('forge:phase', (payload) => {
-    if (forgeLog) forgeLog.updatePhase(payload.phase, payload.current, payload.total, payload.phaseNames);
-  });
-  bus.on('forge:mode', (payload) => {
-    if (forgeLog) forgeLog.updateMode(payload.mode);
-  });
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('claude:spawn', { sessionId: runner.sessionId });
   }
 });
 
-// IPC: forge respond (dashboard card interaction -> write user input or resume Claude)
+// IPC: forge respond (dashboard interaction -> write user input to disk)
 ipcMain.on('forge:respond', (_event, { action, payload }) => {
   if (!runner) return;
 
-  // Path B: write user input to disk for interactive mode
   if (payload && payload.requestId) {
     runner.writeUserInput(payload.requestId, payload.answer || payload.name || payload.text || '');
     return;
   }
 
-  // Legacy path: translate action to text and resume via --resume
-  const text = translateAction(action, payload);
-  runner.respond(text);
+  // Fallback for non-requestId actions (pause, resume, skip-mock)
+  // These don't need disk-state — they're control signals
+  console.log('forge:respond without requestId:', action, payload);
 });
 
-// IPC: load forge log for resume
+// IPC: load forge state for resume
 ipcMain.handle('forge:load-log', async (_event, projectDir) => {
-  const log = new ForgeLog(projectDir);
-  return log.load();
+  const statePath = path.join(projectDir, '.forge', 'state.json');
+  try {
+    return JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+  } catch {
+    return null;
+  }
 });
 
 app.whenReady().then(() => {

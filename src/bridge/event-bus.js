@@ -1,14 +1,5 @@
 const { EventEmitter } = require('events');
 
-const FORGE_EVENTS_V2 = [
-  'forge:question', 'forge:option', 'forge:option-end',
-  'forge:text-question', 'forge:accordion', 'forge:accordion-section',
-  'forge:registry', 'forge:decision', 'forge:loop',
-  'forge:mode', 'forge:phase', 'forge:task',
-  'forge:blocker', 'forge:context-warning', 'forge:complete',
-  'forge:agent-spawn', 'forge:agent-done',
-];
-
 // Events emitted by ForgeStateWatcher (disk-state architecture)
 const FORGE_STATE_EVENTS = [
   'forge:state-update',       // full state.json on every change
@@ -44,4 +35,4 @@ class ForgeBus extends EventEmitter {
   }
 }
 
-module.exports = { ForgeBus, FORGE_EVENTS_V2, FORGE_STATE_EVENTS, CLAUDE_EVENTS };
+module.exports = { ForgeBus, FORGE_STATE_EVENTS, CLAUDE_EVENTS };

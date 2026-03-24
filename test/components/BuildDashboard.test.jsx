@@ -3,7 +3,6 @@ import { BuildDashboard } from '../../src/components/build/BuildDashboard';
 
 beforeEach(() => {
   window.forgeAPI = {
-    onForgeEvent: vi.fn(),
     onRawOutput: vi.fn(),
     onToolUse: vi.fn(),
     onToolResult: vi.fn(),

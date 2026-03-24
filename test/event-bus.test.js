@@ -1,24 +1,24 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { ForgeBus, FORGE_EVENTS_V2, CLAUDE_EVENTS } = require('../src/bridge/event-bus');
+const { ForgeBus, FORGE_STATE_EVENTS, CLAUDE_EVENTS } = require('../src/bridge/event-bus');
 
 describe('ForgeBus', () => {
   it('emits and receives events', () => {
     const bus = new ForgeBus();
     const handler = vi.fn();
-    bus.on('stage:change', handler);
-    bus.emit('stage:change', { stage: 'build' });
-    expect(handler).toHaveBeenCalledWith({ stage: 'build' });
+    bus.on('forge:state-update', handler);
+    bus.emit('forge:state-update', { mode: 'presearch' });
+    expect(handler).toHaveBeenCalledWith({ mode: 'presearch' });
   });
 
   it('supports multiple listeners', () => {
     const bus = new ForgeBus();
     const h1 = vi.fn();
     const h2 = vi.fn();
-    bus.on('agent:spawn', h1);
-    bus.on('agent:spawn', h2);
-    bus.emit('agent:spawn', { name: 'test' });
+    bus.on('forge:mode-change', h1);
+    bus.on('forge:mode-change', h2);
+    bus.emit('forge:mode-change', { mode: 'build' });
     expect(h1).toHaveBeenCalledOnce();
     expect(h2).toHaveBeenCalledOnce();
   });
@@ -26,37 +26,37 @@ describe('ForgeBus', () => {
   it('does not cross-fire between event types', () => {
     const bus = new ForgeBus();
     const handler = vi.fn();
-    bus.on('stage:change', handler);
-    bus.emit('agent:spawn', { name: 'test' });
+    bus.on('forge:state-update', handler);
+    bus.emit('forge:mode-change', { mode: 'build' });
     expect(handler).not.toHaveBeenCalled();
   });
 
   it('supports removeListener', () => {
     const bus = new ForgeBus();
     const handler = vi.fn();
-    bus.on('warning', handler);
-    bus.removeListener('warning', handler);
-    bus.emit('warning', { text: 'test' });
+    bus.on('forge:state-update', handler);
+    bus.removeListener('forge:state-update', handler);
+    bus.emit('forge:state-update', { mode: 'presearch' });
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it('FORGE_EVENTS_V2 contains 17 event names', () => {
-    expect(FORGE_EVENTS_V2).toHaveLength(17);
+  it('FORGE_STATE_EVENTS contains 8 event names', () => {
+    expect(FORGE_STATE_EVENTS).toHaveLength(8);
   });
 
-  it('all v2 events start with forge:', () => {
-    for (const event of FORGE_EVENTS_V2) {
+  it('all state events start with forge:', () => {
+    for (const event of FORGE_STATE_EVENTS) {
       expect(event.startsWith('forge:')).toBe(true);
     }
   });
 
-  it('emitting v2 events works', () => {
+  it('emitting state events works', () => {
     const bus = new ForgeBus();
     const received = [];
-    bus.on('forge:question', (data) => received.push(data));
-    bus.emit('forge:question', { id: 'q1', content: 'What db?' });
+    bus.on('forge:presearch-update', (data) => received.push(data));
+    bus.emit('forge:presearch-update', { questions: [] });
     expect(received).toHaveLength(1);
-    expect(received[0].id).toBe('q1');
+    expect(received[0].questions).toEqual([]);
   });
 
   it('CLAUDE_EVENTS contains 8 event names', () => {

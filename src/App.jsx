@@ -58,20 +58,6 @@ export function App() {
     if (active > 0) spawnHelper();
   }, [build?.agents?.active]);
 
-  // Legacy forge events for costume changes (kept for Phase 1 parallel)
-  useEffect(() => {
-    if (!window.forgeAPI) return;
-    window.forgeAPI.onForgeEvent((event) => {
-      switch (event.type) {
-        case 'forge:agent-spawn':
-          spawnHelper();
-          break;
-        case 'forge:agent-done':
-          removeHelper();
-          break;
-      }
-    });
-  }, []);
 
   const handleLaunch = useCallback((config) => {
     const dirName = config.projectDir.split(/[/\\]/).pop();

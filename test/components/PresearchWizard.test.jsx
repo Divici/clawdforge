@@ -3,7 +3,6 @@ import { PresearchWizard } from '../../src/components/presearch/PresearchWizard'
 
 beforeEach(() => {
   window.forgeAPI = {
-    onForgeEvent: vi.fn(),
     sendForgeResponse: vi.fn(),
   };
 });

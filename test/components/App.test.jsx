@@ -3,7 +3,6 @@ import { App } from '../../src/App';
 
 beforeEach(() => {
   window.forgeAPI = {
-    onForgeEvent: vi.fn(),
     onStateUpdate: vi.fn(),
     onPresearchUpdate: vi.fn(),
     onBuildUpdate: vi.fn(),
