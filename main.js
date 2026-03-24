@@ -37,8 +37,9 @@ function createWindow() {
 
   mainWindow.setMenuBarVisibility(false);
 
-  // Always open DevTools for debugging (remove after disk-state is stable)
-  mainWindow.webContents.openDevTools({ mode: 'detach' });
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+  }
 
   // Forward main process logs to renderer DevTools for debugging
   const origLog = console.log;
