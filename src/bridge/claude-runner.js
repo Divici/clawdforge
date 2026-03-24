@@ -198,28 +198,33 @@ class ClaudeRunner {
    * Install the gate-check Stop hook into the target project.
    */
   _installGateHook(projectDir) {
-    // Write gate-check script into .forge/
-    const hookScript = generateGateCheckScript();
-    const hookPath = path.join(projectDir, '.forge', 'gate-check.js');
-    fs.writeFileSync(hookPath, hookScript, 'utf-8');
-    this._installedPaths.push(hookPath);
-
-    // Write/merge hook config into .claude/settings.local.json
-    const settingsDir = path.join(projectDir, '.claude');
-    fs.mkdirSync(settingsDir, { recursive: true });
-
-    const settingsPath = path.join(settingsDir, 'settings.local.json');
-    let settings = {};
     try {
-      settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
-    } catch { /* doesn't exist yet */ }
+      // Write gate-check script into .forge/
+      const hookScript = generateGateCheckScript();
+      const hookPath = path.join(projectDir, '.forge', 'gate-check.js');
+      fs.writeFileSync(hookPath, hookScript, 'utf-8');
+      this._installedPaths.push(hookPath);
 
-    if (!settings.hooks) settings.hooks = {};
-    settings.hooks.Stop = [
-      { hooks: [{ type: 'command', command: 'node .forge/gate-check.js' }] }
-    ];
+      // Write/merge hook config into .claude/settings.local.json
+      const settingsDir = path.join(projectDir, '.claude');
+      fs.mkdirSync(settingsDir, { recursive: true });
 
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+      const settingsPath = path.join(settingsDir, 'settings.local.json');
+      let settings = {};
+      try {
+        const raw = fs.readFileSync(settingsPath, 'utf-8');
+        if (raw.trim()) settings = JSON.parse(raw);
+      } catch { /* doesn't exist yet or invalid */ }
+
+      if (!settings.hooks) settings.hooks = {};
+      settings.hooks.Stop = [
+        { hooks: [{ type: 'command', command: 'node .forge/gate-check.js' }] }
+      ];
+
+      fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+    } catch (err) {
+      console.error('Failed to install gate-check hook:', err.message);
+    }
   }
 
   /**
@@ -393,9 +398,11 @@ class ClaudeRunner {
     this._onText = onText || null;
 
     // Install disk-state infrastructure
+    console.log('[forge-runner] Installing disk-state infrastructure in:', projectDir);
     this._installForgeDir(projectDir);
     this._installGateHook(projectDir);
     this._installForgeRules(projectDir, runMode);
+    console.log('[forge-runner] Installed paths:', this._installedPaths);
 
     // Build prompt with mode prefix
     const modePrefix = runMode === 'interactive'
@@ -404,6 +411,7 @@ class ClaudeRunner {
 
     const fullPrompt = `${modePrefix}\n\n${prompt || 'Run the /workflow skill'}`;
     const args = this._buildArgs(fullPrompt);
+    console.log('[forge-runner] Spawning claude with args:', args.slice(0, 4).join(' '), '...');
 
     const child = childProcess.spawn('claude', args, {
       cwd: projectDir,
@@ -412,8 +420,14 @@ class ClaudeRunner {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 
+    child.on('error', (err) => {
+      console.error('[forge-runner] Process spawn error:', err.message);
+      this.bus.emit('claude:error', { message: `Spawn failed: ${err.message}` });
+    });
+
     this._wireChild(child);
     this._startWatcher();
+    console.log('[forge-runner] Claude spawned, PID:', child.pid);
     return child;
   }
 

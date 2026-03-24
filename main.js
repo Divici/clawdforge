@@ -102,22 +102,30 @@ ipcMain.handle('project:scan-prd', async (_event, dirPath) => {
 ipcMain.on('claude:spawn', (_event, config) => {
   const { projectDir, prompt, runMode } = config;
 
-  if (runner) {
-    runner.kill();
-  }
-  runner = new ClaudeRunner(bus);
-
-  // Forward raw assistant text to renderer for build log
-  const onText = (text) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('forge:raw-output', text);
+  try {
+    if (runner) {
+      runner.kill();
     }
-  };
+    runner = new ClaudeRunner(bus);
 
-  runner.spawn({ projectDir, prompt: prompt || 'Run the /workflow skill', onText, runMode: runMode || 'autonomous' });
+    // Forward raw assistant text to renderer for build log
+    const onText = (text) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('forge:raw-output', text);
+      }
+    };
 
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('claude:spawn', { sessionId: runner.sessionId });
+    runner.spawn({ projectDir, prompt: prompt || 'Run the /workflow skill', onText, runMode: runMode || 'autonomous' });
+
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('claude:spawn', { sessionId: runner.sessionId });
+    }
+  } catch (err) {
+    console.error('[forge-main] Failed to spawn Claude:', err);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('claude:error', { message: `Spawn failed: ${err.message}` });
+      mainWindow.webContents.send('claude:exit', { code: 1 });
+    }
   }
 });
 
