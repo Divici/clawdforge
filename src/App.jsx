@@ -56,11 +56,26 @@ export function App() {
   // Agent spawn/done from build state
   useEffect(() => {
     if (!build?.agents) return;
-    // Simple approach: sync helper count with active agents
     const active = build.agents.active || 0;
-    // This is a rough sync — we'd need prev state for precise spawn/done
     if (active > 0) spawnHelper();
   }, [build?.agents?.active]);
+
+  // Fallback completion detection: when Claude process exits,
+  // if state.json wasn't updated to "complete", force transition
+  useEffect(() => {
+    if (!window.forgeAPI) return;
+    window.forgeAPI.onClaudeExit((data) => {
+      console.log('[app] Claude exited with code:', data?.code);
+      // Give the watcher 2 seconds to pick up any final state.json write
+      setTimeout(() => {
+        if (mode === 'build' || mode === 'presearch') {
+          console.log('[app] Claude exited during', mode, '— forcing completion');
+          setMode('complete');
+          setRunning(false);
+        }
+      }, 2000);
+    });
+  }, [mode]);
 
 
   const handleLaunch = useCallback((config) => {

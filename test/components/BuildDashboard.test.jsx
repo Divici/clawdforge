@@ -71,17 +71,11 @@ test('renders phases from build state', () => {
   expect(screen.getByText('deploy')).toBeTruthy();
 });
 
-test('renders task cards from phase tasks', () => {
-  const buildState = makeBuild({
-    phases: [
-      {
-        name: 'scaffold', status: 'complete',
-        tasks: [{ id: 't1', description: 'Created user model', status: 'complete', commit: 'feat: add user model' }],
-      },
-    ],
-  });
-  const { container } = render(<BuildDashboard state={makeState()} buildState={buildState} />);
-  expect(container.querySelector('.task-card')).toBeTruthy();
+test('renders two-column layout with activity and build log', () => {
+  const { container } = render(<BuildDashboard state={makeState()} buildState={makeBuild()} />);
+  expect(container.querySelector('.build-dashboard__columns')).toBeTruthy();
+  expect(container.querySelector('.build-dashboard__highlights')).toBeTruthy();
+  expect(container.querySelector('.build-log')).toBeTruthy();
 });
 
 test('renders blocker cards from state', () => {
