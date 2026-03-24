@@ -28,7 +28,16 @@ function buildForgeProtocolRules(runMode) {
 - Set ALL question statuses to "answered" with your chosen answer
 - Do NOT set waitingForInput to true
 - Proceed through all 5 loops without pausing
-- After presearch is complete, transition mode to "build" and begin building`;
+- After presearch is complete, transition mode to "build" and begin building
+
+## Design Discovery
+
+Before starting presearch loops, check if a \`design/\` directory exists at the project root. If found:
+- Read all files in \`design/\` (images, HTML, CSS, JSX, code snippets, wireframes, mockups)
+- Use these as design references when making architecture and UI decisions during presearch
+- Reference specific design files in your presearch decisions (e.g. "Per design/dashboard.html, using card-based layout")
+- During build, implement UI to match the provided designs as closely as possible
+If no \`design/\` directory exists, proceed normally.`;
 
   return `# Forge Protocol — Disk State
 
