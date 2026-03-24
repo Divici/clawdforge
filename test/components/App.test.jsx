@@ -1,6 +1,33 @@
 import { render, screen } from '@testing-library/preact';
 import { App } from '../../src/App';
 
+beforeEach(() => {
+  window.forgeAPI = {
+    onForgeEvent: vi.fn(),
+    onStateUpdate: vi.fn(),
+    onPresearchUpdate: vi.fn(),
+    onBuildUpdate: vi.fn(),
+    onModeChange: vi.fn(),
+    onWaitingForInput: vi.fn(),
+    onRawOutput: vi.fn(),
+    onToolUse: vi.fn(),
+    onToolResult: vi.fn(),
+    onSession: vi.fn(),
+    onCost: vi.fn(),
+    onTurnEnd: vi.fn(),
+    onClaudeExit: vi.fn(),
+    sendForgeResponse: vi.fn(),
+    spawnClaude: vi.fn(),
+    selectDirectory: vi.fn(),
+    scanForPRD: vi.fn(),
+    loadForgeLog: vi.fn(),
+  };
+});
+
+afterEach(() => {
+  delete window.forgeAPI;
+});
+
 test('renders 2-zone layout', () => {
   const { container } = render(<App />);
   const layout = container.querySelector('.app-layout');

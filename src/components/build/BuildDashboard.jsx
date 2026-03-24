@@ -10,12 +10,6 @@ import { ToolActivityFeed } from './ToolActivityFeed';
 import { LoadingStatus } from '../LoadingStatus';
 import './BuildDashboard.css';
 
-function isNoiseLine(line) {
-  const t = line.trim();
-  if (!t || t.length <= 2) return true;
-  return false;
-}
-
 function classifyLine(line) {
   const t = line.trim();
   if (/^\[?(INFO|SYS)\]?/i.test(t) || /^(Reading|Scanning|Analyzing|Creating|Writing|Planning)/i.test(t)) return 'info';
@@ -27,104 +21,59 @@ function classifyLine(line) {
   return 'default';
 }
 
-export function BuildDashboard({ onComplete }) {
-  const [phases, setPhases] = useState([]);
-  const [currentPhase, setCurrentPhase] = useState('');
-  const [completedPhases, setCompletedPhases] = useState([]);
-  const [cards, setCards] = useState([]);
-  const [stats, setStats] = useState({ agents: 0, decisions: 0, tests: 0, artifacts: 0 });
+/**
+ * BuildDashboard — renders build state from .forge/ disk files.
+ * Phases, tasks, blockers from build-state.json.
+ * Tool activity from stream-json events (unchanged).
+ * Raw build log from claude:text events (unchanged).
+ */
+export function BuildDashboard({ state, buildState, onComplete }) {
   const [paused, setPaused] = useState(false);
-  const [complete, setComplete] = useState(false);
-  const [summary, setSummary] = useState(null);
   const [logLines, setLogLines] = useState([]);
   const logRef = useRef(null);
 
+  // Derive state from disk files
+  const buildPhases = buildState?.phases || [];
+  const phaseNames = buildPhases.map(p => p.name);
+  const currentPhase = state?.build?.currentPhase || '';
+  const completedPhases = state?.build?.completedPhases || [];
+  const blockers = state?.build?.blockers || [];
+  const agents = buildState?.agents || { active: 0, totalSpawned: 0, totalCompleted: 0 };
+  const summary = buildState?.summary || null;
+  const isComplete = state?.mode === 'complete';
+
+  // Flatten tasks from all phases for the card log
+  const allTasks = buildPhases.flatMap(phase =>
+    (phase.tasks || []).map(t => ({
+      type: 'task',
+      title: t.description || t.commit || t.id,
+      commit: t.commit,
+      timestamp: t.completedAt || '',
+      status: t.status,
+    }))
+  );
+
+  // Build log from raw claude:text events
   useEffect(() => {
-    if (!window.forgeAPI) return;
+    if (!window.forgeAPI?.onRawOutput) return;
+    window.forgeAPI.onRawOutput((text) => {
+      const lines = text.split('\n');
+      const meaningful = lines
+        .map(l => l.trimEnd())
+        .filter(l => l.trim() && l.trim().length > 2);
 
-    const handleEvent = (event) => {
-      switch (event.type) {
-        case 'forge:phase':
-          if (event.phase) {
-            setCurrentPhase((prev) => {
-              if (prev && prev !== event.phase) {
-                setCompletedPhases((cp) => [...cp, prev]);
-              }
-              return event.phase;
-            });
-          }
-          if (event.phaseNames) setPhases(event.phaseNames);
-          break;
-
-        case 'forge:task':
-          setCards((prev) => [...prev, {
-            type: 'task',
-            title: event.content || event.status,
-            commit: event.content,
-            timestamp: new Date().toISOString(),
-          }]);
-          break;
-
-        case 'forge:agent-spawn':
-          setStats((prev) => ({ ...prev, agents: event.count || prev.agents + 1 }));
-          break;
-
-        case 'forge:agent-done':
-          setStats((prev) => ({ ...prev, agents: event.count || Math.max(0, prev.agents - 1) }));
-          break;
-
-        case 'forge:decision':
-        case 'decision:lock':
-          setStats((prev) => ({ ...prev, decisions: prev.decisions + 1 }));
-          break;
-
-        case 'forge:blocker':
-          setCards((prev) => [...prev, {
-            type: 'blocker',
-            title: `Blocker: ${event.content || event.type}`,
-            description: event.content,
-          }]);
-          break;
-
-        case 'forge:context-warning':
-          setCards((prev) => [...prev, {
-            type: 'context',
-            phase: currentPhase,
-            pct: event.pct,
-          }]);
-          break;
-
-        case 'forge:complete':
-          setComplete(true);
-          setSummary(event.summary || {});
-          if (onComplete) onComplete();
-          break;
+      if (meaningful.length > 0) {
+        setLogLines(prev => {
+          const next = [...prev, ...meaningful.map(l => ({
+            text: l.trim(),
+            type: classifyLine(l),
+            time: new Date().toLocaleTimeString('en-US', { hour12: false }),
+          }))];
+          return next.slice(-300);
+        });
       }
-    };
-
-    window.forgeAPI.onForgeEvent(handleEvent);
-
-    // Raw output → styled build log (text is clean from stream-json, no ANSI stripping)
-    if (window.forgeAPI.onRawOutput) {
-      window.forgeAPI.onRawOutput((text) => {
-        const lines = text.split('\n');
-        const meaningful = lines
-          .map(l => l.trimEnd())
-          .filter(l => !isNoiseLine(l));
-
-        if (meaningful.length > 0) {
-          setLogLines(prev => {
-            const next = [...prev, ...meaningful.map(l => ({
-              text: l.trim(),
-              type: classifyLine(l),
-              time: new Date().toLocaleTimeString('en-US', { hour12: false }),
-            }))];
-            return next.slice(-300);
-          });
-        }
-      });
-    }
-  }, [currentPhase, onComplete]);
+    });
+  }, []);
 
   // Auto-scroll log
   useEffect(() => {
@@ -132,6 +81,11 @@ export function BuildDashboard({ onComplete }) {
       logRef.current.scrollTop = logRef.current.scrollHeight;
     }
   }, [logLines]);
+
+  // Completion detection
+  useEffect(() => {
+    if (isComplete && onComplete) onComplete();
+  }, [isComplete, onComplete]);
 
   const handleResume = useCallback((instructions) => {
     setPaused(false);
@@ -144,47 +98,57 @@ export function BuildDashboard({ onComplete }) {
     if (window.forgeAPI) window.forgeAPI.sendForgeResponse('skip-mock', {});
   }, []);
 
-  if (complete) {
+  const stats = {
+    agents: agents.active,
+    decisions: 0,
+    tests: summary?.tests || 0,
+    artifacts: 0,
+  };
+
+  if (isComplete) {
     return <CompletionScreen summary={summary} />;
   }
 
   if (paused) {
-    return <PauseScreen phase={currentPhase} taskProgress={`${cards.length} tasks`} onResume={handleResume} />;
+    return <PauseScreen phase={currentPhase} taskProgress={`${allTasks.length} tasks`} onResume={handleResume} />;
   }
 
-  const hasStructuredCards = cards.length > 0;
+  // Build blocker cards from state
+  const blockerCards = blockers
+    .filter(b => !b.resolved)
+    .map(b => ({
+      type: 'blocker',
+      title: `Blocker: ${b.message || b.type}`,
+      description: b.message,
+      id: b.id,
+    }));
+
+  const hasCards = allTasks.length > 0 || blockerCards.length > 0;
 
   return (
     <div className="build-dashboard">
       <PhaseStepper
-        phases={phases}
+        phases={phaseNames}
         currentPhase={currentPhase}
         completedPhases={completedPhases}
         stats={stats}
       />
       <div className="build-dashboard__content">
-        {/* Structured cards if forge events arrive */}
-        {hasStructuredCards && (
+        {hasCards && (
           <CardLog>
-            {cards.map((card, i) => {
-              switch (card.type) {
-                case 'task':
-                  return <TaskCard key={i} {...card} expanded={i === cards.length - 1} />;
-                case 'blocker':
-                  return <BlockerCard key={i} title={card.title} description={card.description} onSkipMock={handleSkipMock} />;
-                case 'context':
-                  return <ContextCard key={i} phase={card.phase} taskProgress={`${card.pct}% context used`} onResume={() => handleResume('')} />;
-                default:
-                  return null;
-              }
-            })}
+            {allTasks.map((card, i) => (
+              <TaskCard key={i} {...card} expanded={i === allTasks.length - 1} />
+            ))}
+            {blockerCards.map((card, i) => (
+              <BlockerCard key={`b-${i}`} title={card.title} description={card.description} onSkipMock={handleSkipMock} />
+            ))}
           </CardLog>
         )}
 
         {/* Tool activity feed — real-time tool calls from stream-json */}
         <ToolActivityFeed />
 
-        {/* Build log — always visible, styled like Stitch diagnostic feed */}
+        {/* Build log — always visible */}
         <div className="build-log" ref={logRef}>
           <div className="build-log__header">
             <span className="build-log__header-dot" />

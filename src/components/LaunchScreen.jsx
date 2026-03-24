@@ -8,6 +8,7 @@ export function LaunchScreen({ onLaunch }) {
   const [description, setDescription] = useState('');
   const [hasResume, setHasResume] = useState(false);
   const [startMode, setStartMode] = useState('prd'); // 'prd' | 'describe' | 'resume'
+  const [runMode, setRunMode] = useState('autonomous'); // 'autonomous' | 'interactive'
 
   const handleBrowse = async () => {
     const dir = await window.forgeAPI.selectDirectory();
@@ -35,6 +36,7 @@ export function LaunchScreen({ onLaunch }) {
     onLaunch({
       projectDir,
       mode: startMode,
+      runMode,
       prdFile: startMode === 'prd' ? selectedPrd : null,
       description: startMode === 'describe' ? description : null,
     });
@@ -168,6 +170,37 @@ export function LaunchScreen({ onLaunch }) {
                   }}
                 />
                 <span className="launch-screen__cursor" aria-hidden="true" />
+              </div>
+            </div>
+          )}
+
+          {/* Run Mode Toggle */}
+          {projectDir && (
+            <div className="launch-screen__section">
+              <label className="launch-screen__label">Run Mode</label>
+              <div className="launch-screen__mode-toggle">
+                <button
+                  type="button"
+                  className={`launch-screen__mode-btn ${runMode === 'autonomous' ? 'launch-screen__mode-btn--active' : ''}`}
+                  onClick={() => setRunMode('autonomous')}
+                >
+                  <span className="launch-screen__mode-icon">{'\u2699'}</span>
+                  <div className="launch-screen__mode-info">
+                    <span className="launch-screen__mode-name">Autonomous</span>
+                    <span className="launch-screen__mode-desc">Claude makes all decisions</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className={`launch-screen__mode-btn ${runMode === 'interactive' ? 'launch-screen__mode-btn--active' : ''}`}
+                  onClick={() => setRunMode('interactive')}
+                >
+                  <span className="launch-screen__mode-icon">{'\u2709'}</span>
+                  <div className="launch-screen__mode-info">
+                    <span className="launch-screen__mode-name">Interactive</span>
+                    <span className="launch-screen__mode-desc">You answer each question</span>
+                  </div>
+                </button>
               </div>
             </div>
           )}

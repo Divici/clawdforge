@@ -7,52 +7,70 @@ import { CompletionScreen } from './components/build/CompletionScreen';
 import { ClawdStage } from './clawd/ClawdStage';
 import { setCostume, spawnHelper, removeHelper } from './clawd/stage-renderer';
 import { useElapsedTimer } from './hooks/useElapsedTimer';
+import { useForgeState } from './hooks/useForgeState';
 
 export function App() {
   const [mode, setMode] = useState('launch'); // 'launch' | 'presearch' | 'build' | 'complete'
   const [projectName, setProjectName] = useState('');
   const [running, setRunning] = useState(false);
   const elapsed = useElapsedTimer(running);
+  const { state, presearch, build } = useForgeState();
 
-  // Wire forge events to Claw'd stage costumes and helpers
+  // Drive mode transitions from disk state
+  useEffect(() => {
+    if (!state?.mode) return;
+    const newMode = state.mode;
+    if (newMode === 'presearch' || newMode === 'build' || newMode === 'complete') {
+      setMode(newMode);
+    }
+    if (newMode === 'error') {
+      setMode('complete'); // show completion with error state
+    }
+  }, [state?.mode]);
+
+  // Drive Claw'd costumes from disk state
+  useEffect(() => {
+    if (!state) return;
+
+    if (state.mode === 'presearch') {
+      const loopCostumeMap = {
+        'Constraints': 'presearch-constraints',
+        'Discovery': 'presearch-discovery',
+        'Refinement': 'presearch-refinement',
+        'Plan': 'presearch-planning',
+        'GapAnalysis': 'presearch-gap',
+      };
+      const loopName = state.presearch?.currentLoopName;
+      setCostume(loopCostumeMap[loopName] || 'presearch-constraints');
+    } else if (state.mode === 'build') {
+      setCostume('build-executing');
+    } else if (state.mode === 'complete') {
+      setCostume('complete');
+    }
+  }, [state?.mode, state?.presearch?.currentLoopName]);
+
+  // Agent spawn/done from build state
+  useEffect(() => {
+    if (!build?.agents) return;
+    // Simple approach: sync helper count with active agents
+    const active = build.agents.active || 0;
+    // This is a rough sync — we'd need prev state for precise spawn/done
+    if (active > 0) spawnHelper();
+  }, [build?.agents?.active]);
+
+  // Legacy forge events for costume changes (kept for Phase 1 parallel)
   useEffect(() => {
     if (!window.forgeAPI) return;
-
-    const handleForgeEvent = (event) => {
+    window.forgeAPI.onForgeEvent((event) => {
       switch (event.type) {
-        case 'forge:mode':
-          setMode(event.mode);
-          if (event.mode === 'presearch') setCostume('presearch-constraints');
-          if (event.mode === 'build') setCostume('build-bootstrap');
-          break;
-        case 'forge:loop': {
-          const loopCostumeMap = {
-            'Constraints': 'presearch-constraints',
-            'Discovery': 'presearch-discovery',
-            'Refinement': 'presearch-refinement',
-            'Plan': 'presearch-planning',
-            'GapAnalysis': 'presearch-gap',
-          };
-          setCostume(loopCostumeMap[event.name] || 'idle');
-          break;
-        }
-        case 'forge:phase':
-          setCostume('build-executing');
-          break;
         case 'forge:agent-spawn':
           spawnHelper();
           break;
         case 'forge:agent-done':
           removeHelper();
           break;
-        case 'forge:complete':
-          setMode('complete');
-          setCostume('complete');
-          break;
       }
-    };
-
-    window.forgeAPI.onForgeEvent(handleForgeEvent);
+    });
   }, []);
 
   const handleLaunch = useCallback((config) => {
@@ -61,12 +79,12 @@ export function App() {
     setRunning(true);
     setMode('presearch');
 
-    // Spawn Claude via IPC
     if (window.forgeAPI) {
       window.forgeAPI.spawnClaude({
         projectDir: config.projectDir,
         prompt: config.description,
         prdFile: config.prdFile,
+        runMode: config.runMode || 'autonomous',
       });
     }
   }, []);
@@ -90,9 +108,15 @@ export function App() {
           />
         )}
         {mode === 'launch' && <LaunchScreen onLaunch={handleLaunch} />}
-        {mode === 'presearch' && <PresearchWizard />}
-        {mode === 'build' && <BuildDashboard onComplete={() => setMode('complete')} />}
-        {mode === 'complete' && <CompletionScreen summary={{}} onNewProject={() => { setMode('launch'); setRunning(false); }} />}
+        {mode === 'presearch' && <PresearchWizard state={state} presearch={presearch} />}
+        {mode === 'build' && (
+          <BuildDashboard
+            state={state}
+            buildState={build}
+            onComplete={() => setMode('complete')}
+          />
+        )}
+        {mode === 'complete' && <CompletionScreen summary={build?.summary || {}} onNewProject={() => { setMode('launch'); setRunning(false); }} />}
       </div>
       <div className="app-layout__stage">
         <ClawdStage />

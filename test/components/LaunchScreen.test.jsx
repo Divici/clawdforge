@@ -78,6 +78,7 @@ test('calls onLaunch with prd mode when PRD file selected', async () => {
   expect(onLaunch).toHaveBeenCalledWith({
     projectDir: '/test/project',
     mode: 'prd',
+    runMode: 'autonomous',
     prdFile: 'prd.md',
     description: null,
   });
@@ -100,9 +101,40 @@ test('calls onLaunch with describe mode when description entered', async () => {
   expect(onLaunch).toHaveBeenCalledWith({
     projectDir: '/test/project',
     mode: 'describe',
+    runMode: 'autonomous',
     prdFile: null,
     description: 'Build a dashboard',
   });
+});
+
+test('shows mode toggle after directory selection', async () => {
+  window.forgeAPI.selectDirectory.mockResolvedValue('/test/project');
+  window.forgeAPI.scanForPRD.mockResolvedValue({ prdFiles: ['prd.md'], hasWorkflowState: false });
+
+  render(<LaunchScreen onLaunch={() => {}} />);
+  fireEvent.click(screen.getByText('Browse'));
+
+  await new Promise((r) => setTimeout(r, 50));
+
+  expect(screen.getByText('Run Mode')).toBeTruthy();
+  expect(screen.getByText('Autonomous')).toBeTruthy();
+  expect(screen.getByText('Interactive')).toBeTruthy();
+});
+
+test('passes interactive runMode when toggled', async () => {
+  const onLaunch = vi.fn();
+  window.forgeAPI.selectDirectory.mockResolvedValue('/test/project');
+  window.forgeAPI.scanForPRD.mockResolvedValue({ prdFiles: ['prd.md'], hasWorkflowState: false });
+
+  render(<LaunchScreen onLaunch={onLaunch} />);
+  fireEvent.click(screen.getByText('Browse'));
+
+  await new Promise((r) => setTimeout(r, 50));
+
+  fireEvent.click(screen.getByText('Interactive'));
+  fireEvent.click(screen.getByText('Start Build'));
+
+  expect(onLaunch).toHaveBeenCalledWith(expect.objectContaining({ runMode: 'interactive' }));
 });
 
 test('calls onLaunch with resume mode', async () => {
