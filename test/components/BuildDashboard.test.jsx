@@ -46,9 +46,9 @@ test('renders build dashboard container', () => {
   expect(container.querySelector('.build-dashboard')).toBeTruthy();
 });
 
-test('renders phase stepper', () => {
+test('renders build stepper', () => {
   const { container } = render(<BuildDashboard state={makeState()} buildState={makeBuild()} />);
-  expect(container.querySelector('.phase-stepper')).toBeTruthy();
+  expect(container.querySelector('.build-stepper')).toBeTruthy();
 });
 
 test('renders build log panel', () => {
@@ -92,12 +92,11 @@ test('renders blocker cards from state', () => {
   expect(container.querySelector('.blocker-card')).toBeTruthy();
 });
 
-test('shows completion screen when mode is complete', () => {
+test('calls onComplete when mode is complete', () => {
+  const onComplete = vi.fn();
   const state = makeState({ mode: 'complete' });
-  const buildState = makeBuild({ summary: { tests: 42 } });
-  render(<BuildDashboard state={state} buildState={buildState} />);
-  expect(screen.getByText(/Forge Completion/)).toBeTruthy();
-  expect(screen.getByText('42')).toBeTruthy();
+  render(<BuildDashboard state={state} buildState={makeBuild()} onComplete={onComplete} />);
+  expect(onComplete).toHaveBeenCalled();
 });
 
 test('calls onComplete when mode transitions to complete', () => {

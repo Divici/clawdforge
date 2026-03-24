@@ -40,16 +40,21 @@ export function CompletionScreen({ summary, onNewProject }) {
   const projectName = s.projectName || 'Untitled';
   const issues = s.issues || [];
   const issueCount = issues.length;
+  const hasError = !!s.error;
+  const statusLabel = hasError ? 'BUILD_FAILED' : 'BUILD_COMPLETE';
+  const statusClass = hasError ? 'cs-hero__status--error' : '';
 
   return (
     <div className="cs">
-      {/* Hero Section — 8+4 grid */}
-      <div className="cs-hero">
+      {/* Hero Section */}
+      <div className={`cs-hero ${hasError ? 'cs-hero--error' : ''}`}>
         <div className="cs-hero__left">
-          <span className="cs-hero__status">SYSTEM_STATUS: DEPLOY_READY</span>
-          <h2 className="cs-hero__title">Forge Completion: {projectName}</h2>
+          <span className={`cs-hero__status ${statusClass}`}>SYSTEM_STATUS: {statusLabel}</span>
+          <h2 className="cs-hero__title">{hasError ? 'Build Failed' : 'Forge Complete'}: {projectName}</h2>
           <p className="cs-hero__desc">
-            All build phases finalized. The forge output is ready for deployment review.
+            {hasError
+              ? `Build encountered an error: ${s.error}`
+              : 'All build phases finalized. The forge output is ready for deployment review.'}
           </p>
           <div className="cs-hero__actions">
             <Button variant="primary">🚀 Initiate Deployment</Button>

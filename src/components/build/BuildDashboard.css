@@ -1,25 +1,200 @@
-/* BuildDashboard — Stitch: full-width, no sidebar */
+/* BuildDashboard — 2-column layout with presearch-style stepper */
 .build-dashboard {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  padding: 32px;
+  padding: 0 24px 24px;
   gap: 16px;
+  max-width: 1152px;
+  margin: 0 auto;
+  width: 100%;
 }
 
-.build-dashboard__content {
-  flex: 1;
+/* ── Build Stepper (presearch style) ── */
+.build-stepper {
+  margin-bottom: 8px;
+  position: sticky;
+  top: 48px;
+  z-index: 30;
+  background: var(--color-bg);
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.build-stepper__header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.build-stepper__phase-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-primary);
+}
+
+.build-stepper__step-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-outline);
+}
+
+.build-stepper__bar {
+  display: grid;
+  gap: 6px;
+  height: 4px;
+  width: 100%;
+  background: var(--color-surface-low);
+}
+
+.build-stepper__segment {
+  height: 100%;
+  border-radius: 1px;
+}
+
+.build-stepper__segment--complete {
+  background: var(--color-primary-container);
+}
+
+.build-stepper__segment--active {
+  background: var(--color-primary-container);
+  position: relative;
+}
+
+.build-stepper__segment--active::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 181, 158, 0.2);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.build-stepper__segment--future {
+  background: rgba(85, 67, 61, 0.2);
+}
+
+.build-stepper__labels {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.build-stepper__label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  color: var(--color-outline);
+}
+
+.build-stepper__label--active {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.build-stepper__label--future {
+  color: var(--color-outline-variant);
+}
+
+.build-stepper__stats {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(85, 67, 61, 0.1);
+}
+
+.build-stepper__stat {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-outline);
+}
+
+.build-stepper__stat-value {
+  color: var(--color-primary-container);
+  font-weight: 700;
+}
+
+/* ── Two-column content ── */
+.build-dashboard__columns {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
   min-height: 0;
   overflow: hidden;
 }
 
-/* Build Log — Stitch styled terminal log */
-.build-log {
+/* ── Task Cards column ── */
+.build-dashboard__cards {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-lowest);
+  border: 1px solid rgba(85, 67, 61, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.build-dashboard__cards-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--color-surface-low);
+  border-bottom: 1px solid rgba(85, 67, 61, 0.1);
+}
+
+.build-dashboard__cards-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-tertiary);
+  animation: log-pulse 2s ease-in-out infinite;
+}
+
+.build-dashboard__cards-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+}
+
+.build-dashboard__cards-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-outline);
+}
+
+.build-dashboard__cards-body {
   flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.build-dashboard__cards-waiting {
+  padding: 24px 0;
+  text-align: center;
+}
+
+/* ── Build Log column ── */
+.build-log {
   display: flex;
   flex-direction: column;
   background: var(--color-surface-lowest);
@@ -74,12 +249,6 @@
   text-align: center;
 }
 
-.build-log__waiting-dot {
-  color: var(--color-primary-container);
-  margin-right: 8px;
-  animation: log-pulse 1.5s ease-in-out infinite;
-}
-
 .build-log__line {
   display: flex;
   gap: 12px;
@@ -100,7 +269,6 @@
   word-break: break-word;
 }
 
-/* Line type colors */
 .build-log__line--info .build-log__text { color: var(--color-on-surface-variant); }
 .build-log__line--done .build-log__text { color: var(--color-tertiary); }
 .build-log__line--error .build-log__text { color: var(--color-error); }
@@ -108,3 +276,9 @@
 .build-log__line--agent .build-log__text { color: var(--color-primary); }
 .build-log__line--commit .build-log__text { color: var(--color-primary-container); font-weight: 600; }
 .build-log__line--default .build-log__text { color: var(--color-on-surface-variant); }
+
+@media (max-width: 800px) {
+  .build-dashboard__columns {
+    grid-template-columns: 1fr;
+  }
+}

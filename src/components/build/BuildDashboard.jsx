@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
-import { PhaseStepper } from './PhaseStepper';
 import { CardLog } from './CardLog';
 import { TaskCard } from './TaskCard';
 import { BlockerCard } from './BlockerCard';
-import { ContextCard } from './ContextCard';
 import { PauseScreen } from './PauseScreen';
-import { CompletionScreen } from './CompletionScreen';
-import { ToolActivityFeed } from './ToolActivityFeed';
 import { LoadingStatus } from '../LoadingStatus';
 import './BuildDashboard.css';
+
+const LOOP_NAMES = {
+  'Constraints': 1, 'Discovery': 2, 'Refinement': 3, 'Plan': 4, 'GapAnalysis': 5,
+};
 
 function classifyLine(line) {
   const t = line.trim();
@@ -21,18 +21,12 @@ function classifyLine(line) {
   return 'default';
 }
 
-/**
- * BuildDashboard — renders build state from .forge/ disk files.
- * Phases, tasks, blockers from build-state.json.
- * Tool activity from stream-json events (unchanged).
- * Raw build log from claude:text events (unchanged).
- */
 export function BuildDashboard({ state, buildState, onComplete }) {
   const [paused, setPaused] = useState(false);
   const [logLines, setLogLines] = useState([]);
   const logRef = useRef(null);
+  const cardsRef = useRef(null);
 
-  // Derive state from disk files
   const buildPhases = buildState?.phases || [];
   const phaseNames = buildPhases.map(p => p.name);
   const currentPhase = state?.build?.currentPhase || '';
@@ -41,8 +35,14 @@ export function BuildDashboard({ state, buildState, onComplete }) {
   const agents = buildState?.agents || { active: 0, totalSpawned: 0, totalCompleted: 0 };
   const summary = buildState?.summary || null;
   const isComplete = state?.mode === 'complete';
+  const isError = state?.status === 'error';
 
-  // Flatten tasks from all phases for the card log
+  // Derive stats from build state
+  const totalTasks = buildPhases.reduce((sum, p) => sum + (p.tasks?.length || 0), 0);
+  const completedTasks = buildPhases.reduce((sum, p) =>
+    sum + (p.tasks?.filter(t => t.status === 'complete').length || 0), 0);
+
+  // Flatten tasks for card log
   const allTasks = buildPhases.flatMap(phase =>
     (phase.tasks || []).map(t => ({
       type: 'task',
@@ -75,14 +75,15 @@ export function BuildDashboard({ state, buildState, onComplete }) {
     });
   }, []);
 
-  // Auto-scroll log
+  // Auto-scroll log and cards
   useEffect(() => {
-    if (logRef.current) {
-      logRef.current.scrollTop = logRef.current.scrollHeight;
-    }
+    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [logLines]);
 
-  // Completion detection
+  useEffect(() => {
+    if (cardsRef.current) cardsRef.current.scrollTop = cardsRef.current.scrollHeight;
+  }, [allTasks.length]);
+
   useEffect(() => {
     if (isComplete && onComplete) onComplete();
   }, [isComplete, onComplete]);
@@ -98,57 +99,92 @@ export function BuildDashboard({ state, buildState, onComplete }) {
     if (window.forgeAPI) window.forgeAPI.sendForgeResponse('skip-mock', {});
   }, []);
 
-  const stats = {
-    agents: agents.active,
-    decisions: 0,
-    tests: summary?.tests || 0,
-    artifacts: 0,
-  };
-
-  if (isComplete) {
-    return <CompletionScreen summary={summary} />;
-  }
-
   if (paused) {
-    return <PauseScreen phase={currentPhase} taskProgress={`${allTasks.length} tasks`} onResume={handleResume} />;
+    return <PauseScreen phase={currentPhase} taskProgress={`${completedTasks}/${totalTasks} tasks`} onResume={handleResume} />;
   }
 
-  // Build blocker cards from state
-  const blockerCards = blockers
-    .filter(b => !b.resolved)
-    .map(b => ({
-      type: 'blocker',
-      title: `Blocker: ${b.message || b.type}`,
-      description: b.message,
-      id: b.id,
-    }));
-
-  const hasCards = allTasks.length > 0 || blockerCards.length > 0;
+  const unresolvedBlockers = blockers.filter(b => !b.resolved);
+  const stepLabel = completedPhases.length + (currentPhase ? 1 : 0);
 
   return (
     <div className="build-dashboard">
-      <PhaseStepper
-        phases={phaseNames}
-        currentPhase={currentPhase}
-        completedPhases={completedPhases}
-        stats={stats}
-      />
-      <div className="build-dashboard__content">
-        {hasCards && (
-          <CardLog>
-            {allTasks.map((card, i) => (
-              <TaskCard key={i} {...card} expanded={i === allTasks.length - 1} />
-            ))}
-            {blockerCards.map((card, i) => (
-              <BlockerCard key={`b-${i}`} title={card.title} description={card.description} onSkipMock={handleSkipMock} />
-            ))}
-          </CardLog>
+      {/* Stepper — presearch style */}
+      <section className="build-stepper">
+        <div className="build-stepper__header">
+          <span className="build-stepper__phase-label">Build Phase{currentPhase ? `: ${currentPhase}` : ''}</span>
+          <span className="build-stepper__step-count">
+            Phase {String(stepLabel).padStart(2, '0')} / {String(phaseNames.length || '?').padStart(2, '0')}
+          </span>
+        </div>
+        {phaseNames.length > 0 && (
+          <>
+            <div className="build-stepper__bar" style={{ gridTemplateColumns: `repeat(${phaseNames.length}, 1fr)` }}>
+              {phaseNames.map((name) => {
+                const isComp = completedPhases.includes(name);
+                const isCurr = currentPhase === name;
+                let cls = 'build-stepper__segment';
+                if (isComp) cls += ' build-stepper__segment--complete';
+                else if (isCurr) cls += ' build-stepper__segment--active';
+                else cls += ' build-stepper__segment--future';
+                return <div key={name} className={cls} />;
+              })}
+            </div>
+            <div className="build-stepper__labels" style={{ gridTemplateColumns: `repeat(${phaseNames.length}, 1fr)` }}>
+              {phaseNames.map((name) => {
+                const isCurr = currentPhase === name;
+                const isComp = completedPhases.includes(name);
+                let cls = 'build-stepper__label';
+                if (isCurr) cls += ' build-stepper__label--active';
+                else if (!isComp) cls += ' build-stepper__label--future';
+                return <span key={name} className={cls}>{name}</span>;
+              })}
+            </div>
+          </>
         )}
+        {/* Stats row */}
+        <div className="build-stepper__stats">
+          <span className="build-stepper__stat">
+            <span className="build-stepper__stat-value">{agents.totalSpawned}</span> agents
+          </span>
+          <span className="build-stepper__stat">
+            <span className="build-stepper__stat-value">{completedTasks}</span>/{totalTasks} tasks
+          </span>
+          <span className="build-stepper__stat">
+            <span className="build-stepper__stat-value">{summary?.tests || '—'}</span> tests
+          </span>
+          <span className="build-stepper__stat">
+            <span className="build-stepper__stat-value">{completedPhases.length}</span>/{phaseNames.length} phases
+          </span>
+        </div>
+      </section>
 
-        {/* Tool activity feed — real-time tool calls from stream-json */}
-        <ToolActivityFeed />
+      {/* Two-column content: task cards | build log */}
+      <div className="build-dashboard__columns">
+        {/* Left: task cards + blockers */}
+        <div className="build-dashboard__cards" ref={cardsRef}>
+          <div className="build-dashboard__cards-header">
+            <span className="build-dashboard__cards-dot" />
+            <span className="build-dashboard__cards-title">Task Log</span>
+            <span className="build-dashboard__cards-count">{completedTasks}/{totalTasks}</span>
+          </div>
+          <div className="build-dashboard__cards-body">
+            {allTasks.length === 0 && unresolvedBlockers.length === 0 && (
+              <div className="build-dashboard__cards-waiting">
+                <LoadingStatus prefix={currentPhase ? `Building ${currentPhase}` : 'Starting build'} />
+              </div>
+            )}
+            <CardLog>
+              {allTasks.map((card, i) => (
+                <TaskCard key={i} {...card} expanded={i === allTasks.length - 1} />
+              ))}
+              {unresolvedBlockers.map((b, i) => (
+                <BlockerCard key={`b-${i}`} title={`Blocker: ${b.message || b.type}`} description={b.message} onSkipMock={handleSkipMock} />
+              ))}
+            </CardLog>
+          </div>
+        </div>
 
-        {/* Build log — always visible */}
+        {/* Right: build log */}
         <div className="build-log" ref={logRef}>
           <div className="build-log__header">
             <span className="build-log__header-dot" />

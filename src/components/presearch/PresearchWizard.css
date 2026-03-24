@@ -79,6 +79,16 @@
   gap: 12px;
 }
 
+.presearch-wizard__working {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--color-surface-low);
+  border-left: 2px solid var(--color-primary);
+  animation: skeleton-fade-in 0.3s ease-out;
+}
+
 /* Skeleton file tree — animated loading state */
 .skeleton-tree {
   background: var(--color-surface-low);

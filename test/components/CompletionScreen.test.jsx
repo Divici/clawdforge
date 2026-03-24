@@ -3,13 +3,19 @@ import { CompletionScreen } from '../../src/components/build/CompletionScreen';
 
 test('renders status label and title with project name', () => {
   render(<CompletionScreen summary={{ projectName: 'ACME' }} />);
-  expect(screen.getByText('SYSTEM_STATUS: DEPLOY_READY')).toBeTruthy();
-  expect(screen.getByText(/Forge Completion: ACME/)).toBeTruthy();
+  expect(screen.getByText('SYSTEM_STATUS: BUILD_COMPLETE')).toBeTruthy();
+  expect(screen.getByText(/Forge Complete: ACME/)).toBeTruthy();
 });
 
 test('renders default title when no projectName', () => {
   render(<CompletionScreen summary={{}} />);
-  expect(screen.getByText(/Forge Completion: Untitled/)).toBeTruthy();
+  expect(screen.getByText(/Forge Complete: Untitled/)).toBeTruthy();
+});
+
+test('renders error state when error is present', () => {
+  render(<CompletionScreen summary={{ error: 'Tests failed', projectName: 'ACME' }} />);
+  expect(screen.getByText('SYSTEM_STATUS: BUILD_FAILED')).toBeTruthy();
+  expect(screen.getByText(/Build Failed: ACME/)).toBeTruthy();
 });
 
 test('renders Claw\'d mascot placeholder when no sprite', () => {
@@ -86,7 +92,7 @@ test('renders Archive Build button when onNewProject provided', () => {
 
 test('handles null summary gracefully', () => {
   render(<CompletionScreen summary={null} />);
-  expect(screen.getByText(/Forge Completion/)).toBeTruthy();
+  expect(screen.getByText(/Forge Complete/)).toBeTruthy();
 });
 
 test('renders string issues as simple list items', () => {

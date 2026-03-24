@@ -24,7 +24,11 @@ export function App() {
       setMode(newMode);
     }
     if (newMode === 'error') {
-      setMode('complete'); // show completion with error state
+      setMode('complete');
+    }
+    // Stop timer on complete or error
+    if (newMode === 'complete' || newMode === 'error') {
+      setRunning(false);
     }
   }, [state?.mode]);
 
@@ -102,7 +106,17 @@ export function App() {
             onComplete={() => setMode('complete')}
           />
         )}
-        {mode === 'complete' && <CompletionScreen summary={build?.summary || {}} onNewProject={() => { setMode('launch'); setRunning(false); }} />}
+        {mode === 'complete' && (
+          <CompletionScreen
+            summary={{
+              ...(build?.summary || {}),
+              projectName: projectName,
+              error: state?.error || null,
+              elapsed: `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`,
+            }}
+            onNewProject={() => { setMode('launch'); setRunning(false); }}
+          />
+        )}
       </div>
       <div className="app-layout__stage">
         <ClawdStage />
