@@ -174,6 +174,19 @@ If the project has NO external dependencies (no API keys, no database, no deploy
 { "version": 1, "envVars": [], "deployment": null, "postBuildSteps": [] }
 \`\`\`
 
+### README Generation (REQUIRED as final build step)
+
+Before writing config-required.json, generate a comprehensive \`README.md\` at the project root. Include:
+- Project name and one-line description
+- Prerequisites and installation steps
+- How to run (dev, build, test)
+- Environment variables table (name, description, required)
+- Tech stack summary
+- Project structure overview
+- License placeholder
+
+This is the LAST coding step before writing config-required.json and transitioning to "complete" mode.
+
 ## Writing Rules
 
 - Use the Write tool for all \`.forge/\` file writes
@@ -182,6 +195,7 @@ If the project has NO external dependencies (no API keys, no database, no deploy
 - Do NOT emit [FORGE:*] markers in text output — they are deprecated
 - During build, NEVER hardcode secrets or API keys — always use environment variables
 - Flag all required configuration in config-required.json — the user will provide values after build
+- **CRITICAL: Update build-state.json after EVERY agent spawn, task completion, and phase transition.** Increment \`agents.totalSpawned\` when launching an agent, \`agents.totalCompleted\` when one finishes. Update task statuses to "complete" as they finish. The dashboard counters depend on these values being current.
 
 ${modeRules}
 `;

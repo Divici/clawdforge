@@ -172,10 +172,10 @@ export function ConfigScreen({ config, summary, projectName, elapsed, onDone, on
       {/* Actions */}
       <div className="config-screen__actions">
         {onSkip && (
-          <Button variant="secondary" onClick={onSkip}>New Project</Button>
+          <Button variant="secondary" size="large" onClick={onSkip}>New Project</Button>
         )}
         {onDone && (
-          <Button variant="primary" onClick={onDone}>Done</Button>
+          <Button variant="primary" size="large" onClick={onDone}>Done</Button>
         )}
       </div>
     </div>

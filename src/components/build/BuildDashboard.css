@@ -290,6 +290,57 @@
 .build-log__line--commit .build-log__text { color: var(--color-primary-container); font-weight: 600; }
 .build-log__line--default .build-log__text { color: var(--color-on-surface-variant); }
 
+/* ── Structured activity events (left column) ── */
+.build-event {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(85, 67, 61, 0.06);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.build-event:last-child {
+  border-bottom: none;
+}
+
+.build-event__icon {
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+  font-size: 10px;
+  margin-top: 1px;
+}
+
+.build-event__label {
+  flex: 1;
+  word-break: break-word;
+  color: var(--color-on-surface-variant);
+}
+
+.build-event__time {
+  flex-shrink: 0;
+  font-size: 9px;
+  color: var(--color-outline-variant);
+  margin-left: auto;
+}
+
+/* Category colors */
+.build-event--commit .build-event__icon { color: var(--color-primary-container); }
+.build-event--commit .build-event__label { color: var(--color-primary-container); font-weight: 600; }
+.build-event--agent .build-event__icon { color: var(--color-primary); }
+.build-event--agent .build-event__label { color: var(--color-primary); }
+.build-event--test .build-event__icon { color: var(--color-tertiary); }
+.build-event--test .build-event__label { color: var(--color-tertiary); }
+.build-event--phase .build-event__icon { color: var(--color-warning); }
+.build-event--phase .build-event__label { color: var(--color-warning); font-weight: 700; }
+.build-event--error .build-event__icon { color: var(--color-error); }
+.build-event--error .build-event__label { color: var(--color-error); }
+.build-event--done .build-event__icon { color: var(--color-tertiary); }
+.build-event--done .build-event__label { color: var(--color-tertiary); }
+
 @media (max-width: 800px) {
   .build-dashboard__columns {
     grid-template-columns: 1fr;

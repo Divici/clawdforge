@@ -63,6 +63,26 @@
   background: var(--color-surface-bright);
 }
 
+/* Large variant — matches LaunchScreen start button sizing */
+.btn--large {
+  padding: 16px 40px;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+.btn--large.btn--primary {
+  box-shadow: 0 10px 15px -3px rgba(217, 119, 87, 0.2);
+}
+.btn--large.btn--primary:active:not(:disabled) {
+  transform: scale(0.95);
+}
+.btn--large.btn--secondary {
+  letter-spacing: 0.1em;
+  padding: 12px 24px;
+  color: var(--color-primary);
+}
+
 /* ProConList */
 .pro-con-list__pro { color: var(--color-tertiary); }
 .pro-con-list__con { color: var(--color-error); }
