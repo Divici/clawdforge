@@ -148,10 +148,9 @@ describe('Disk-state integration: interactive presearch flow', () => {
     });
     await delay(80);
 
-    // Gate check should BLOCK (waiting for input, no user-input.json)
+    // Gate check should PASS (no longer blocks on waiting_for_input — dashboard resumes Claude)
     const errors1 = validateForgeState(forgeDir);
-    expect(errors1.length).toBe(1);
-    expect(errors1[0]).toMatch(/WAITING/);
+    expect(errors1).toEqual([]);
 
     // Watcher should emit waiting-for-input
     // (first state write won't emit since there's no prev, but let's update to trigger)

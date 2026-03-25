@@ -153,7 +153,7 @@ describe('gate-check: validateForgeState', () => {
   });
 
   describe('interactive mode: waiting_for_input check', () => {
-    it('returns WAITING error when waitingForInput=true and no user-input.json', () => {
+    it('passes (no blocking) when waitingForInput=true and no user-input.json', () => {
       writeJSON(forgeDir, 'state.json', {
         mode: 'presearch',
         status: 'waiting_for_input',
@@ -165,11 +165,11 @@ describe('gate-check: validateForgeState', () => {
         questions: [{ id: 'q1', status: 'pending' }],
       });
       const errors = validateForgeState(forgeDir);
-      expect(errors.some(e => e.includes('WAITING'))).toBe(true);
-      expect(errors.some(e => e.includes('q1'))).toBe(true);
+      // Gate-check no longer blocks on waiting_for_input — the dashboard resumes Claude after user answers
+      expect(errors).toEqual([]);
     });
 
-    it('returns WAITING error when user-input.json has wrong requestId', () => {
+    it('passes (no blocking) when user-input.json has wrong requestId', () => {
       writeJSON(forgeDir, 'state.json', {
         mode: 'presearch',
         status: 'waiting_for_input',
@@ -185,7 +185,7 @@ describe('gate-check: validateForgeState', () => {
         answer: 'SQLite',
       });
       const errors = validateForgeState(forgeDir);
-      expect(errors.some(e => e.includes('WAITING'))).toBe(true);
+      expect(errors).toEqual([]);
     });
 
     it('passes when user-input.json has matching requestId', () => {

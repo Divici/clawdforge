@@ -19,9 +19,9 @@ function buildForgeProtocolRules(runMode) {
 - For EACH question batch:
   1. Write questions to presearch-state.json with status "pending"
   2. Set state.json: status="waiting_for_input", presearch.waitingForInput=true, presearch.inputRequestId=<first pending question id>
-  3. STOP your turn (the Stop hook will block you until the user answers)
-  4. When unblocked, read .forge/user-input.json for the answer
-  5. Update the question status to "answered", clear waitingForInput, continue`
+  3. End your turn. The dashboard will resume you after the user answers.
+  4. When resumed, read .forge/user-input.json for the user's answer
+  5. Update the question status to "answered" in presearch-state.json, clear waitingForInput and inputRequestId in state.json, then continue to the next question or loop`
     : `## Autonomous Mode
 
 - Ask 3-5 questions per presearch loop AND answer them yourself with your best recommendation
@@ -493,7 +493,8 @@ class ClaudeRunner {
   }
 
   /**
-   * Write user input to .forge/user-input.json for interactive mode.
+   * Write user input to .forge/user-input.json for interactive mode,
+   * then resume Claude so it can read the answer.
    */
   writeUserInput(requestId, answer) {
     if (!this._projectDir) {
@@ -506,6 +507,46 @@ class ClaudeRunner {
       answer,
       answeredAt: new Date().toISOString(),
     }, null, 2), 'utf-8');
+
+    // Resume Claude so it can pick up the answer.
+    // If the process is still running, it will read the file on its own.
+    // If it has exited (turn completed while waiting), we resume it.
+    this._resumeAfterInput();
+  }
+
+  /**
+   * Resume the Claude process after user input has been written.
+   * Only resumes if the child process has already exited.
+   */
+  _resumeAfterInput() {
+    if (!this.sessionId) {
+      console.warn('[forge-runner] Cannot resume: no session ID');
+      return;
+    }
+
+    // Check if child is still running
+    const isRunning = this._child && !this._child.killed && this._child.exitCode === null;
+    if (isRunning) {
+      console.log('[forge-runner] Claude still running, it will read user-input.json on its own');
+      return;
+    }
+
+    console.log('[forge-runner] Claude exited, resuming session:', this.sessionId);
+    const resumePrompt = 'The user answered a presearch question. Read .forge/user-input.json for their answer, update the question status to "answered" in presearch-state.json, clear waitingForInput in state.json, and continue with the next question or loop.';
+    const args = this._buildArgs(resumePrompt, this.sessionId);
+    const child = childProcess.spawn('claude', args, {
+      cwd: this._projectDir,
+      env: this._buildEnv(),
+      shell: process.platform === 'win32',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    child.on('error', (err) => {
+      console.error('[forge-runner] Resume spawn error:', err.message);
+      this.bus.emit('claude:error', { message: `Resume failed: ${err.message}` });
+    });
+
+    this._wireChild(child);
   }
 
   /**

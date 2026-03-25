@@ -55,17 +55,9 @@ function validateForgeState(forgeDir) {
     }
   }
 
-  // Interactive mode: check if waiting for user input
-  if (state.status === 'waiting_for_input' && state.presearch?.waitingForInput && state.presearch?.inputRequestId) {
-    const input = readJSON(path.join(forgeDir, 'user-input.json'));
-    if (!input || input.requestId !== state.presearch.inputRequestId) {
-      errors.push(
-        `WAITING: User has not answered question "${state.presearch.inputRequestId}" yet. ` +
-        'The dashboard will write .forge/user-input.json when the user responds. ' +
-        'Read that file when the requestId matches, then continue.'
-      );
-    }
-  }
+  // Interactive mode: when waiting for user input, let the turn complete.
+  // The dashboard will resume Claude after the user answers.
+  // Do NOT block with exit 2 here — that creates a busy-wait loop that burns turns.
 
   return errors;
 }
@@ -112,12 +104,8 @@ if (errors.length === 0 && state.mode === 'build') {
   else if (!Array.isArray(bs.phases)) errors.push('INVALID: build-state.json missing "phases" array');
 }
 
-if (errors.length === 0 && state.status === 'waiting_for_input' && state.presearch?.waitingForInput && state.presearch?.inputRequestId) {
-  const input = readJSON(path.join(forgeDir, 'user-input.json'));
-  if (!input || input.requestId !== state.presearch.inputRequestId) {
-    errors.push('WAITING: User has not answered question "' + state.presearch.inputRequestId + '" yet. Read .forge/user-input.json when the requestId matches.');
-  }
-}
+// Interactive mode: let the turn complete when waiting for input.
+// The dashboard will resume Claude after the user answers.
 
 if (errors.length > 0) {
   console.error('=== FORGE GATE CHECK FAILED ===');

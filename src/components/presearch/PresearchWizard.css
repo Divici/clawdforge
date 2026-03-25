@@ -89,6 +89,32 @@
   animation: skeleton-fade-in 0.3s ease-out;
 }
 
+/* Submitted answer — immediate feedback after clicking */
+.presearch-wizard__submitted {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--color-surface-low);
+  border: 1px solid rgba(85, 67, 61, 0.2);
+  border-left: 3px solid var(--color-tertiary);
+  border-radius: 2px;
+}
+
+.presearch-wizard__submitted-icon {
+  color: var(--color-tertiary);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.presearch-wizard__submitted-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-on-surface-variant);
+}
+
 /* Skeleton file tree — animated loading state */
 .skeleton-tree {
   background: var(--color-surface-low);
