@@ -9,6 +9,7 @@ import './PresearchWizard.css';
 
 export function PresearchWizard({ state, presearch }) {
   const [reopenedIds, setReopenedIds] = useState(new Set());
+  const [submittedIds, setSubmittedIds] = useState(new Set());
   const cardsEndRef = useRef(null);
 
   const currentLoop = state?.presearch?.currentLoop || 1;
@@ -35,6 +36,7 @@ export function PresearchWizard({ state, presearch }) {
       next.delete(id);
       return next;
     });
+    setSubmittedIds(prev => new Set(prev).add(id));
     if (window.forgeAPI) {
       window.forgeAPI.sendForgeResponse('select-option', {
         requestId: id,
@@ -50,6 +52,7 @@ export function PresearchWizard({ state, presearch }) {
       next.delete(id);
       return next;
     });
+    setSubmittedIds(prev => new Set(prev).add(id));
     if (window.forgeAPI) {
       window.forgeAPI.sendForgeResponse('custom-text', {
         requestId: id,
@@ -94,7 +97,8 @@ export function PresearchWizard({ state, presearch }) {
           <div className="presearch-wizard__cards">
             {questions.map((q) => {
               const isAnswered = q.status === 'answered' && !reopenedIds.has(q.id);
-              const isPending = q.status === 'pending' || reopenedIds.has(q.id);
+              const isSubmitted = submittedIds.has(q.id) && !isAnswered;
+              const isPending = (q.status === 'pending' || reopenedIds.has(q.id)) && !isSubmitted;
 
               if (isAnswered) {
                 return (
@@ -103,6 +107,15 @@ export function PresearchWizard({ state, presearch }) {
                     summary={`${q.question}: ${q.answer}`}
                     onReopen={state?.runMode === 'interactive' ? () => handleReopen(q.id) : undefined}
                   />
+                );
+              }
+
+              if (isSubmitted) {
+                return (
+                  <div key={q.id} className="presearch-wizard__submitted">
+                    <span className="presearch-wizard__submitted-icon">{'\u2713'}</span>
+                    <span className="presearch-wizard__submitted-text">Response submitted — waiting for processing...</span>
+                  </div>
                 );
               }
 

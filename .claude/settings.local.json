@@ -2,19 +2,26 @@
   "permissions": {
     "allow": [
       "Bash(npm install:*)",
-      "Bash(chmod +x \"c:/Users/doa92/Desktop/Gauntlet Projects/matrixForge/.claude/hooks/protect-env.sh\" \"c:/Users/doa92/Desktop/Gauntlet Projects/matrixForge/.claude/hooks/block-destructive-git.sh\")",
       "Bash(npx vitest:*)",
-      "Bash(cd C:/Users/doa92/Desktop/\"Gauntlet Projects\"/matrixForge/.claude/worktrees/agent-ad3fc7a0)",
-      "Bash(node -e \"require\\(''''@testing-library/preact''''\\)\")",
-      "Bash(mkdir -p test/components)",
-      "Bash(mkdir -p src/components/shared)",
       "Bash(npx eslint:*)",
       "Bash(npx asar:*)",
-      "Bash(grep -E \"^\\\\\\\\\\(main|preload|launch|dist-renderer|src\\)\")",
       "Bash(npx vite:*)",
-      "Bash(taskkill /f /im \"Claw''''d Forge.exe\")",
-      "Bash(taskkill /f /im electron.exe)",
-      "Bash(rm -rf 'c:/Users/doa92/Desktop/Gauntlet Projects/matrixForge/dist/win-unpacked')"
+      "Bash(npx electron-builder:*)",
+      "Bash(taskkill:*)",
+      "Bash(rm -rf:*)",
+      "Read(//c/tmp/forge-compliance-test/**)",
+      "Bash(claude -p \"Write the required .forge/state.json and .forge/presearch-state.json files per the forge protocol rules. For presearch-state.json, include one example question about database choice with 2 options \\(SQLite and PostgreSQL\\), each with pros and cons. Mark it as answered with SQLite as the answer.\" --output-format stream-json --dangerously-skip-permissions)",
+      "Bash(claude -p \"Write the required .forge/state.json and .forge/presearch-state.json files per the forge protocol rules. For presearch-state.json, include one example question about database choice with 2 options \\(SQLite and PostgreSQL\\), each with pros and cons. Mark it as answered with SQLite as the answer.\" --output-format stream-json --verbose --dangerously-skip-permissions)",
+      "Read(//c/Users/doa92/AppData/Local/Temp/forge-compliance-test/.forge/**)",
+      "Bash(tasklist)",
+      "Edit(~/.claude/skills/sweep/**)",
+      "Edit(~/.claude/skills/workflow/**)",
+      "Bash(xargs wc:*)"
+    ],
+    "defaultMode": "bypassPermissions",
+    "additionalDirectories": [
+      "\\tmp\\forge-compliance-test\\.claude\\rules",
+      "c:\\tmp\\forge-compliance-test\\.claude\\rules"
     ]
   }
 }
